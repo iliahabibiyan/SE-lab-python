@@ -12,3 +12,5 @@ target
 .env.*
 README.md
 scripts
+db/migrations
+docs
