@@ -12,6 +12,5 @@ CREATE TABLE users (
     postal_code   CHAR(10) NOT NULL
                   CHECK (postal_code ~ '^[0-9]{10}$'),
     password_hash TEXT NOT NULL,
-    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
-    updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
