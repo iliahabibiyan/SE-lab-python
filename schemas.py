@@ -108,8 +108,9 @@ BirthDate = Annotated[date, AfterValidator(_check_birth_date)]
 
 
 class _RequestModel(BaseModel):
-    # Unknown fields are rejected; inputs (e.g. national code) are kept out of
-    # error strings so they cannot leak into logs (GEN-11).
+    # Unknown fields are rejected. hide_input_in_errors keeps inputs (e.g. the
+    # national code) out of str(exc) and logs (GEN-11); the HTTP error handler
+    # must also drop "input" from exc.errors() before building the response.
     model_config = ConfigDict(extra="forbid", hide_input_in_errors=True)
 
 
