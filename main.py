@@ -14,6 +14,7 @@ from app.middleware import correlation_middleware
 from app.routers import users
 
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     run_migrations()
