@@ -1,0 +1,19 @@
+# The LAST matching pattern wins, so the catch-all rule is first.
+# Every path has at least 2 owners (an author can not approve his own PR).
+# Replace the xx-user-N placeholders with the real GitHub usernames.
+
+*                 @iliahabibiyan @masih-mn @mreza127 
+
+# Backend code, migrations and tests
+/app/             @iliahabibiyan @masih-mn @mreza127
+/main.py          @iliahabibiyan @masih-mn @mreza127
+/migrations/      @iliahabibiyan @masih-mn @mreza127
+/tests/           @iliahabibiyan @masih-mn @mreza127
+/tests-api/       @iliahabibiyan @masih-mn @mreza127
+
+# Frontend and documents
+/frontend/        @iliahabibiyan @masih-mn @mreza127
+/docs/            @iliahabibiyan @masih-mn @mreza127
+
+# Repo rules and CI
+/.github/         @iliahabibiyan @masih-mn @mreza127

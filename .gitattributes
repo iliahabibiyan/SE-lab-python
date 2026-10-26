@@ -1,6 +1,33 @@
-* text=auto
-*.sh text eol=lf
-*.go text eol=lf
-*.py text eol=lf
-*.java text eol=lf
-*.cs text eol=lf
+# Same line endings (LF) for everybody, so Windows users do not create fake diffs/conflicts.
+* text=auto eol=lf
+
+*.py    text eol=lf
+*.sql   text eol=lf
+*.md    text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+*.json  text eol=lf
+*.toml  text eol=lf
+*.txt   text eol=lf
+*.ini   text eol=lf
+*.sh    text eol=lf
+*.bru   text eol=lf
+*.ts    text eol=lf
+*.tsx   text eol=lf
+*.js    text eol=lf
+*.css   text eol=lf
+*.html  text eol=lf
+Dockerfile text eol=lf
+CODEOWNERS text eol=lf
+
+# Binary files: never touch them
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.pdf   binary
+*.zip   binary
+*.woff  binary
+*.woff2 binary
