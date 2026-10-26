@@ -1,3 +1,5 @@
+"""S1 - Customer & Account Management service."""
+
 import os
 from contextlib import asynccontextmanager
 
@@ -9,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db, run_migrations
 from app.errors import ApiError, register_error_handlers
 from app.middleware import correlation_middleware
+from app.routers import users
 
 
 @asynccontextmanager
@@ -28,6 +31,7 @@ app.add_middleware(
     expose_headers=["X-Correlation-ID"],
 )
 register_error_handlers(app)
+app.include_router(users.router)
 
 
 @app.get("/health")
