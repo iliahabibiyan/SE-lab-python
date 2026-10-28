@@ -1,0 +1,36 @@
+meta {
+  name: Register user - duplicate national code (409)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "national_code": "{{nationalCode}}",
+    "name": "کاربر تکراری",
+    "birth_date": "1990-01-01",
+    "phone_number": "09121234567",
+    "address": "تهران، میدان ونک",
+    "postal_code": "1593656789"
+  }
+}
+
+tests {
+  // run "1-register-success" first (or run the whole folder): it creates the national code
+  test("409 Conflict with problem+json body", function () {
+    expect(res.status).to.equal(409);
+    expect(res.headers["content-type"]).to.contain("application/problem+json");
+    expect(res.body.code).to.equal("CONFLICT");
+    expect(res.body.detail).to.equal("کد ملی تکراری است");
+  });
+}
