@@ -1,0 +1,44 @@
+meta {
+  name: Register user - success
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "national_code": "{{nationalCode}}",
+    "name": "علی رضایی",
+    "birth_date": "1995-03-21",
+    "phone_number": "09123456789",
+    "address": "تهران، خیابان آزادی، پلاک ۱۰",
+    "postal_code": "1593656789"
+  }
+}
+
+script:pre-request {
+  // random but VALID national code, so the request can be run again and again
+  const d = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  if (d.every((x) => x === d[0])) d[8] = (d[8] + 1) % 10;
+  const sum = d.reduce((acc, x, i) => acc + x * (10 - i), 0);
+  const r = sum % 11;
+  const check = r < 2 ? r : 11 - r;
+  bru.setVar("nationalCode", d.join("") + check);
+}
+
+tests {
+  test("201 Created with ACTIVE status", function () {
+    expect(res.status).to.equal(201);
+    expect(res.body.status).to.equal("ACTIVE");
+    expect(res.body.id).to.be.a("string");
+  });
+}
