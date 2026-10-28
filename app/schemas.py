@@ -3,7 +3,14 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.validators import is_valid_national_code, is_valid_phone, is_valid_postal_code
+from app.validators import (
+    is_valid_national_code,
+    is_valid_phone,
+    is_valid_postal_code,
+    normalize_digits,
+    normalize_phone,
+    normalize_text,
+)
 
 
 class UserCreate(BaseModel):
@@ -15,9 +22,26 @@ class UserCreate(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     birth_date: date
     phone_number: str
-    address: str = Field(min_length=1, max_length=255)
+    address: str = Field(min_length=5, max_length=255)
     postal_code: str
 
+    # --- normalization (runs before the checks below) ---
+    @field_validator("national_code", "postal_code", mode="before")
+    @classmethod
+    def clean_digits(cls, v):
+        return normalize_digits(v) if isinstance(v, str) else v
+
+    @field_validator("phone_number", mode="before")
+    @classmethod
+    def clean_phone(cls, v):
+        return normalize_phone(v) if isinstance(v, str) else v
+
+    @field_validator("name", "address", mode="before")
+    @classmethod
+    def clean_text(cls, v):
+        return normalize_text(v) if isinstance(v, str) else v
+
+    # --- validation ---
     @field_validator("national_code")
     @classmethod
     def check_national_code(cls, v: str) -> str:
