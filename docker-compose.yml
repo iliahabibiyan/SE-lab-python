@@ -20,6 +20,7 @@ services:
     environment:
       DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is not set in .env}
     ports:
       - "8081:8080"
     depends_on:
