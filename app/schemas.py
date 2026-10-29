@@ -16,7 +16,7 @@ from app.validators import (
 class UserCreate(BaseModel):
     """Request body of POST /api/v1/users (US1)."""
 
-    model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="forbid")
 
     national_code: str
     name: str = Field(min_length=1, max_length=100)
@@ -24,6 +24,7 @@ class UserCreate(BaseModel):
     phone_number: str
     address: str = Field(min_length=5, max_length=255)
     postal_code: str
+    password: str = Field(min_length=8)
 
     # --- normalization (runs before the checks below) ---
     @field_validator("national_code", "postal_code", mode="before")
@@ -61,6 +62,14 @@ class UserCreate(BaseModel):
     def check_postal_code(cls, v: str) -> str:
         if not is_valid_postal_code(v):
             raise ValueError("کد پستی نامعتبر است")
+        return v
+
+    @field_validator("password")
+    @classmethod
+    def check_password(cls, v: str) -> str:
+        # bcrypt only uses the first 72 bytes (a Persian letter is 2 bytes)
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("رمز عبور نباید بیشتر از ۷۲ بایت باشد")
         return v
 
     @field_validator("birth_date")

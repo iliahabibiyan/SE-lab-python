@@ -7,6 +7,7 @@ from app.database import get_db
 from app.errors import ApiError
 from app.models import User
 from app.schemas import UserCreate, UserResponse
+from app.security import hash_password
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
@@ -20,7 +21,7 @@ def register_user(body: UserCreate, db: Session = Depends(get_db)):
     if exists:
         raise ApiError(409, "CONFLICT", DUPLICATE_NATIONAL_CODE)
 
-    user = User(**body.model_dump())
+    user = User(**body.model_dump(exclude={"password"}), password_hash=hash_password(body.password))
     db.add(user)
     try:
         db.commit()
