@@ -11,18 +11,19 @@ from sqlalchemy.orm import Session
 from app.database import get_db, run_migrations
 from app.errors import ApiError, register_error_handlers
 from app.middleware import correlation_middleware
-from app.routers import users
+from app.routers import auth, users
+from app.tokens import get_secret
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    get_secret()  
     run_migrations()
     yield
 
 
 app = FastAPI(title="S1 - Customer & Account Management", redirect_slashes=False, lifespan=lifespan)
 app.middleware("http")(correlation_middleware)
-# added last = outermost, so even error responses get the CORS headers
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[o.strip() for o in os.getenv("CORS_ORIGINS", "http://localhost:5173").split(",")],
@@ -32,6 +33,7 @@ app.add_middleware(
 )
 register_error_handlers(app)
 app.include_router(users.router)
+app.include_router(auth.router)
 
 
 @app.get("/health")
