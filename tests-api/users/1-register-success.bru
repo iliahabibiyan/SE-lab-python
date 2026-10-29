@@ -21,7 +21,8 @@ body:json {
     "birth_date": "1995-03-21",
     "phone_number": "09123456789",
     "address": "تهران، خیابان آزادی، پلاک ۱۰",
-    "postal_code": "1593656789"
+    "postal_code": "1593656789",
+    "password": "Str0ng-pass1"
   }
 }
 
@@ -33,6 +34,7 @@ script:pre-request {
   const r = sum % 11;
   const check = r < 2 ? r : 11 - r;
   bru.setVar("nationalCode", d.join("") + check);
+  bru.setVar("password", "Str0ng-pass1");
 }
 
 tests {
