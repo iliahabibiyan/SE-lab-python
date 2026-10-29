@@ -4,6 +4,7 @@ from pathlib import Path
 
 # Must be set BEFORE the app is imported: tests use a throw-away SQLite file, not PostgreSQL.
 os.environ["DATABASE_URL"] = "sqlite:///" + (Path(tempfile.mkdtemp()) / "test.db").as_posix()
+os.environ["BCRYPT_ROUNDS"] = "4"  # fast hashing in tests
 
 import pytest
 from fastapi.testclient import TestClient

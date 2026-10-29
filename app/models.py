@@ -18,3 +18,4 @@ class User(Base):
     phone_number: Mapped[str] = mapped_column(String(11))
     address: Mapped[str] = mapped_column(String(255))
     postal_code: Mapped[str] = mapped_column(String(10))
+    password_hash: Mapped[str | None] = mapped_column(String(255), default=None)
