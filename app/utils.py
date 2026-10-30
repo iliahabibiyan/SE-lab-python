@@ -1,6 +1,7 @@
 import os
 import time
 import uuid
+from datetime import datetime, timezone
 
 
 def new_id() -> str:
@@ -11,3 +12,8 @@ def new_id() -> str:
     rand_b = rand & ((1 << 62) - 1)   # 62 bits
     value = (ms << 80) | (0x7 << 76) | (rand_a << 64) | (0b10 << 62) | rand_b
     return str(uuid.UUID(int=value))
+
+
+def utcnow() -> datetime:
+    """Current UTC time without tzinfo (the database columns store naive UTC)."""
+    return datetime.now(timezone.utc).replace(tzinfo=None)

@@ -10,20 +10,33 @@ DEFAULT_CODES = {
     403: "FORBIDDEN",
     404: "NOT_FOUND",
     409: "CONFLICT",
+    429: "TOO_MANY_REQUESTS",
     503: "SERVICE_UNAVAILABLE",
     504: "UPSTREAM_TIMEOUT",
 }
 
 
 class ApiError(Exception):
-    def __init__(self, status: int, code: str, detail: str, title: str | None = None):
+    def __init__(
+        self,
+        status: int,
+        code: str,
+        detail: str,
+        title: str | None = None,
+        extra: dict | None = None,
+        headers: dict | None = None,
+    ):
         self.status = status
         self.code = code
         self.detail = detail
         self.title = title or code.replace("_", " ").capitalize()
+        self.extra = extra or {}      # additional fields of the problem body
+        self.headers = headers        # additional HTTP headers (e.g. Retry-After)
 
 
-def problem_response(request: Request, status: int, code: str, title: str, detail: str, **extra) -> JSONResponse:
+def problem_response(
+    request: Request, status: int, code: str, title: str, detail: str, headers: dict | None = None, **extra
+) -> JSONResponse:
     """RFC 9457 problem+json body, as required by GEN-06."""
     body = {
         "type": "https://errors.labbank.example/" + code.lower().replace("_", "-"),
@@ -34,13 +47,13 @@ def problem_response(request: Request, status: int, code: str, title: str, detai
         "correlation_id": getattr(request.state, "correlation_id", None),
         **extra,
     }
-    return JSONResponse(body, status_code=status, media_type="application/problem+json")
+    return JSONResponse(body, status_code=status, headers=headers, media_type="application/problem+json")
 
 
 def register_error_handlers(app: FastAPI) -> None:
     @app.exception_handler(ApiError)
     async def handle_api_error(request: Request, exc: ApiError):
-        return problem_response(request, exc.status, exc.code, exc.title, exc.detail)
+        return problem_response(request, exc.status, exc.code, exc.title, exc.detail, exc.headers, **exc.extra)
 
     @app.exception_handler(RequestValidationError)
     async def handle_validation_error(request: Request, exc: RequestValidationError):
