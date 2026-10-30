@@ -1,0 +1,28 @@
+meta {
+  name: Refresh - invalid token (401)
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refresh_token": "this.is.not-a-valid-token"
+  }
+}
+
+tests {
+  test("401 UNAUTHORIZED", function () {
+    expect(res.status).to.equal(401);
+    expect(res.body.code).to.equal("UNAUTHORIZED");
+  });
+}

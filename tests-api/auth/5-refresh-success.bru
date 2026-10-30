@@ -1,0 +1,30 @@
+meta {
+  name: Refresh - success
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/refresh
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "refresh_token": "{{refreshToken}}"
+  }
+}
+
+tests {
+  // run "auth/1-login-success" first: it saves the token in refreshToken
+  test("200 OK with a new pair of tokens", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.access_token).to.be.a("string");
+    expect(res.body.refresh_token).to.be.a("string");
+  });
+}
