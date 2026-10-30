@@ -15,7 +15,14 @@ class LoginRequest(BaseModel):
         return normalize_digits(v) if isinstance(v, str) else v
 
 
+class RefreshRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    refresh_token: str
+
+
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
-    expires_in: int  
+    expires_in: int

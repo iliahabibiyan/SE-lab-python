@@ -2,18 +2,19 @@ import math
 import os
 from datetime import datetime, timedelta
 
+import jwt
 from fastapi import APIRouter, Depends
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from app.auth_schemas import LoginRequest, TokenResponse
+from app.auth_schemas import LoginRequest, RefreshRequest, TokenResponse
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
 from app.schemas import UserResponse
 from app.security import hash_password, verify_password
-from app.tokens import ACCESS_TOKEN_MINUTES, create_access_token
+from app.tokens import ACCESS_TOKEN_MINUTES, create_access_token, create_refresh_token, decode_token
 from app.utils import utcnow
 
 router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -27,13 +28,19 @@ INACTIVE_MESSAGES = {
     "BLOCKED": "حساب کاربری مسدود شده است",
     "INACTIVE": "حساب کاربری غیرفعال است",
 }
-# Checked when the user does not exist, so the response time is the same as for a wrong password.
 DUMMY_HASH = hash_password("dummy-password-for-timing")
+
+
+def build_tokens(user_id: str) -> TokenResponse:
+    return TokenResponse(
+        access_token=create_access_token(user_id),
+        refresh_token=create_refresh_token(user_id),
+        expires_in=ACCESS_TOKEN_MINUTES * 60,
+    )
 
 
 def register_failed_attempt(db: Session, user: User, now: datetime) -> None:
     """Count one wrong password; lock the account when the limit is reached."""
-    # the +1 is done by the database itself, so parallel requests can not lose a count
     db.execute(
         update(User).where(User.id == user.id).values(failed_login_attempts=User.failed_login_attempts + 1)
     )
@@ -80,7 +87,23 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     if user.status != "ACTIVE":
         raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "حساب کاربری فعال نیست"))
 
-    return TokenResponse(access_token=create_access_token(user.id), expires_in=ACCESS_TOKEN_MINUTES * 60)
+    return build_tokens(user.id)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
+    """Exchange a valid refresh token for a new pair of tokens, without logging in again."""
+    try:
+        payload = decode_token(body.refresh_token, "refresh")
+    except jwt.InvalidTokenError:
+        raise ApiError(401, "UNAUTHORIZED", "توکن نامعتبر یا منقضی شده است")
+
+    user = db.get(User, payload["sub"])
+    if user is None:
+        raise ApiError(401, "UNAUTHORIZED", "توکن نامعتبر است")
+    if user.status != "ACTIVE":  # blocked/inactive users can not extend their session
+        raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "حساب کاربری فعال نیست"))
+    return build_tokens(user.id)
 
 
 @router.get("/me", response_model=UserResponse)

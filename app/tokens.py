@@ -5,6 +5,7 @@ import jwt
 
 ALGORITHM = "HS256"
 ACCESS_TOKEN_MINUTES = int(os.getenv("ACCESS_TOKEN_MINUTES", "15"))
+REFRESH_TOKEN_DAYS = int(os.getenv("REFRESH_TOKEN_DAYS", "7"))
 
 
 def get_secret() -> str:
@@ -22,6 +23,10 @@ def _create_token(user_id: str, token_type: str, lifetime: timedelta) -> str:
 
 def create_access_token(user_id: str) -> str:
     return _create_token(user_id, "access", timedelta(minutes=ACCESS_TOKEN_MINUTES))
+
+
+def create_refresh_token(user_id: str) -> str:
+    return _create_token(user_id, "refresh", timedelta(days=REFRESH_TOKEN_DAYS))
 
 
 def decode_token(token: str, token_type: str = "access") -> dict:

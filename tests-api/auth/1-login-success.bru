@@ -23,13 +23,15 @@ body:json {
 
 script:post-response {
   bru.setVar("accessToken", res.body.access_token);
+  bru.setVar("refreshToken", res.body.refresh_token);
 }
 
 tests {
   // run "users/1-register-success" first: it creates the user and sets nationalCode/password
-  test("200 OK with a bearer access token", function () {
+  test("200 OK with access and refresh tokens", function () {
     expect(res.status).to.equal(200);
     expect(res.body.token_type).to.equal("bearer");
     expect(res.body.access_token).to.be.a("string");
+    expect(res.body.refresh_token).to.be.a("string");
   });
 }
