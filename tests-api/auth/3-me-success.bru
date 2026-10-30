@@ -1,0 +1,24 @@
+meta {
+  name: Me - with token
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/me
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  // run "auth/1-login-success" first: it saves the token in accessToken
+  test("200 OK with the profile of the logged-in user", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.national_code).to.equal(bru.getVar("nationalCode"));
+    expect(res.body).to.not.have.property("password_hash");
+  });
+}
