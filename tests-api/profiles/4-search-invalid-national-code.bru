@@ -1,0 +1,23 @@
+meta {
+  name: Search user - invalid national code (400)
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users?national_code=123
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("400 VALIDATION_ERROR pointing at national_code", function () {
+    expect(res.status).to.equal(400);
+    expect(res.body.code).to.equal("VALIDATION_ERROR");
+    expect(res.body.errors[0].field).to.equal("national_code");
+  });
+}
