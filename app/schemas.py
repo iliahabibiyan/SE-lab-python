@@ -91,3 +91,8 @@ class UserResponse(BaseModel):
     phone_number: str
     address: str
     postal_code: str
+
+
+class UserListResponse(BaseModel):
+    items: list[UserResponse]
+    next_cursor: str | None = None  # pass it as ?cursor=... to get the next page; null on the last page
