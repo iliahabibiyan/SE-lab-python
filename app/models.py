@@ -21,3 +21,4 @@ class User(Base):
     password_hash: Mapped[str | None] = mapped_column(String(255), default=None)
     failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(default=None)  # UTC
+    role: Mapped[str] = mapped_column(String(10), default="USER")  # USER or ADMIN
