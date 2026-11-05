@@ -37,6 +37,10 @@ script:pre-request {
   bru.setVar("password", "Str0ng-pass1");
 }
 
+script:post-response {
+  bru.setVar("userId", res.body.id);
+}
+
 tests {
   test("201 Created with ACTIVE status", function () {
     expect(res.status).to.equal(201);

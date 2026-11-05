@@ -1,9 +1,12 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
 from app.schemas import UserCreate, UserResponse
@@ -29,4 +32,20 @@ def register_user(body: UserCreate, db: Session = Depends(get_db)):
         db.rollback()
         raise ApiError(409, "CONFLICT", DUPLICATE_NATIONAL_CODE)
     db.refresh(user)
+    return user
+
+
+USER_NOT_FOUND = "کاربری با این شناسه یافت نشد"
+
+
+@router.get("/{user_id}", response_model=UserResponse)
+def get_user(
+    user_id: UUID,
+    current_user: User = Depends(get_current_user),  # login is required; who may see whom: task 3.3
+    db: Session = Depends(get_db),
+):
+    """US3: profile of one user. UserResponse has no password hash or other sensitive field."""
+    user = db.get(User, str(user_id))
+    if user is None:
+        raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
     return user
