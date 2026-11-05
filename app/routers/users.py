@@ -9,6 +9,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
+from app.permissions import ensure_can_view_user, is_admin
 from app.schemas import UserCreate, UserListResponse, UserResponse
 from app.security import hash_password
 from app.validators import is_valid_national_code, normalize_digits
@@ -41,7 +42,7 @@ def search_users(
     national_code: str | None = Query(None, description="exact national code to look for"),
     limit: int = Query(50, ge=1, le=200),
     cursor: str | None = Query(None, description="next_cursor of the previous page"),
-    current_user: User = Depends(get_current_user),  # login is required; who may see whom: task 3.3
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """US3: list/search users. Cursor pagination (GEN-09): results are ordered by id."""
@@ -60,6 +61,9 @@ def search_users(
     if cursor:
         query = query.where(User.id > cursor)
 
+    if not is_admin(current_user):  # a normal user can only "see" his own record
+        query = query.where(User.id == current_user.id)
+
     rows = db.scalars(query).all()
     next_cursor = rows[limit - 1].id if len(rows) > limit else None
     items = [UserResponse.model_validate(user) for user in rows[:limit]]
@@ -72,10 +76,12 @@ USER_NOT_FOUND = "کاربری با این شناسه یافت نشد"
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: UUID,
-    current_user: User = Depends(get_current_user),  # login is required; who may see whom: task 3.3
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """US3: profile of one user. UserResponse has no password hash or other sensitive field."""
+    """US3: profile of one user (own profile, or any profile for an ADMIN). No sensitive fields are returned."""
+    ensure_can_view_user(current_user, str(user_id))  # before the lookup: no hint whether the id exists
+
     user = db.get(User, str(user_id))
     if user is None:
         raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
