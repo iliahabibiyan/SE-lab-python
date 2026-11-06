@@ -91,6 +91,7 @@ class UserResponse(BaseModel):
     phone_number: str
     address: str
     postal_code: str
+    role: str
 
 
 class UserListResponse(BaseModel):

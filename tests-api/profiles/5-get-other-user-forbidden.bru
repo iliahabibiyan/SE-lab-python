@@ -1,0 +1,24 @@
+meta {
+  name: Get another user's profile (403)
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/v1/users/{{otherUserId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  // the logged-in user is a normal user, so he can not see the profile of "users/4-register-other-user"
+  test("403 FORBIDDEN with problem+json body", function () {
+    expect(res.status).to.equal(403);
+    expect(res.headers["content-type"]).to.contain("application/problem+json");
+    expect(res.body.code).to.equal("FORBIDDEN");
+  });
+}

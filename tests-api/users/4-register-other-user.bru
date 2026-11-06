@@ -1,0 +1,47 @@
+meta {
+  name: Register another user (for the 403 test)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/users
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "national_code": "{{otherNationalCode}}",
+    "name": "سارا احمدی",
+    "birth_date": "1998-07-12",
+    "phone_number": "09121234567",
+    "address": "تهران، خیابان ولیعصر",
+    "postal_code": "1593656789",
+    "password": "Str0ng-pass1"
+  }
+}
+
+script:pre-request {
+  // random but VALID national code
+  const d = Array.from({ length: 9 }, () => Math.floor(Math.random() * 10));
+  if (d.every((x) => x === d[0])) d[8] = (d[8] + 1) % 10;
+  const sum = d.reduce((acc, x, i) => acc + x * (10 - i), 0);
+  const r = sum % 11;
+  const check = r < 2 ? r : 11 - r;
+  bru.setVar("otherNationalCode", d.join("") + check);
+}
+
+script:post-response {
+  bru.setVar("otherUserId", res.body.id);
+}
+
+tests {
+  test("201 Created", function () {
+    expect(res.status).to.equal(201);
+  });
+}

@@ -5,6 +5,7 @@ from app.models import User
 
 PASSWORD = "Str0ng-pass1"
 NATIONAL_CODE = "0013542419"
+OTHER_NATIONAL_CODE = "0499370899"
 
 
 def valid_payload(**overrides) -> dict:
@@ -50,3 +51,18 @@ def update_user(national_code: str, **fields) -> None:
         for name, value in fields.items():
             setattr(user, name, value)
         db.commit()
+
+
+def register_other_user(client) -> dict:
+    """A second user (a normal user, same password)."""
+    return register_user(client, national_code=OTHER_NATIONAL_CODE, phone_number="09121234567")
+
+
+def token_for(client, national_code=NATIONAL_CODE) -> str:
+    response = login(client, national_code=national_code)
+    assert response.status_code == 200, response.text
+    return response.json()["access_token"]
+
+
+def make_admin(national_code=NATIONAL_CODE) -> None:
+    update_user(national_code, role="ADMIN")
