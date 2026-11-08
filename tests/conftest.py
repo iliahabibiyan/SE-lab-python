@@ -10,12 +10,14 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
+from app.cache import profile_cache
 from app.database import engine
 from main import app
 
 
 @pytest.fixture
 def client():
+    profile_cache.clear()  # no cached profile may leak from one test into the next
     with TestClient(app) as test_client:
         yield test_client
     with engine.begin() as conn:
