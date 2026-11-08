@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.cache import profile_cache
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.errors import ApiError
@@ -76,13 +77,24 @@ USER_NOT_FOUND = "کاربری با این شناسه یافت نشد"
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: UUID,
+    response: Response,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """US3: profile of one user (own profile, or any profile for an ADMIN). No sensitive fields are returned."""
-    ensure_can_view_user(current_user, str(user_id))  # before the lookup: no hint whether the id exists
+    key = str(user_id)
+    ensure_can_view_user(current_user, key)  # checked on every request, also when the answer is cached
 
-    user = db.get(User, str(user_id))
-    if user is None:
+    cached = profile_cache.get(key)
+    if cached is not None:
+        response.headers["X-Cache"] = "HIT"
+        return cached
+
+    user = db.get(User, key)
+    if user is None:  # "not found" is never cached
         raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
-    return user
+
+    profile = UserResponse.model_validate(user).model_dump(mode="json")
+    profile_cache.set(key, profile)
+    response.headers["X-Cache"] = "MISS"
+    return profile
