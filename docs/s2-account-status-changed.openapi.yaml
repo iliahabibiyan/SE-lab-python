@@ -1,0 +1,136 @@
+openapi: 3.1.0
+info:
+  title: S2 (Balance & Ledger) - Account status changed notification
+  version: 1.0.0
+  description: |
+    **Provider:** S2 (LDG2-S, port 8082). **Consumer / caller:** S1 (Customer & Account).
+
+    When the status of an account changes in S1, S1 tells S2 with a PATCH and a boolean:
+    `active: true` (account is ACTIVE) or `active: false` (account is INACTIVE or BLOCKED).
+    S1 calls this endpoint **after** the new status was saved in its own database.
+
+    Setting the same value again is harmless (PATCH with an absolute value is idempotent).
+
+    The path is a proposal of the S1 team; it must be confirmed with the S2 team (session 4).
+servers:
+  - url: http://localhost:8082
+    description: S2 on a developer machine
+tags:
+  - name: accounts
+paths:
+  /api/v1/accounts/{account_id}/status:
+    patch:
+      tags: [accounts]
+      operationId: updateAccountStatus
+      summary: S1 tells S2 that the status of an account changed
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - name: account_id
+          in: path
+          required: true
+          description: Id of the account (the one S1 sent when the account was created).
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountStatusChanged'
+            examples:
+              deactivated:
+                summary: Account became INACTIVE or BLOCKED in S1
+                value:
+                  active: false
+              activated:
+                summary: Account became ACTIVE in S1
+                value:
+                  active: true
+      responses:
+        '204':
+          description: S2 stored the new status.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '404':
+          $ref: '#/components/responses/AccountNotFound'
+components:
+  parameters:
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: Passed on from the request that changed the status (GEN-08).
+      schema:
+        type: string
+  headers:
+    CorrelationId:
+      description: The correlation id of this request.
+      schema:
+        type: string
+  schemas:
+    AccountStatusChanged:
+      type: object
+      required: [active]
+      additionalProperties: false
+      properties:
+        active:
+          type: boolean
+          description: true = ACTIVE in S1; false = INACTIVE or BLOCKED in S1.
+    Problem:
+      type: object
+      description: RFC 9457 problem details (GEN-06).
+      required: [type, title, status, code, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        detail:
+          type: string
+        correlation_id:
+          type: [string, 'null']
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+  responses:
+    ValidationError:
+      description: Missing/malformed `active` or malformed `account_id`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/validation-error
+            title: Validation error
+            status: 400
+            code: VALIDATION_ERROR
+            detail: Invalid or incomplete input
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+    AccountNotFound:
+      description: S2 does not know this account (the "account created" notification was not received yet).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/not-found
+            title: Not found
+            status: 404
+            code: NOT_FOUND
+            detail: Account not found
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
