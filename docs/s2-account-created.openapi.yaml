@@ -1,0 +1,130 @@
+openapi: 3.1.0
+info:
+  title: S2 (Balance & Ledger) - Account created notification
+  version: 1.0.0
+  description: |
+    **Provider:** S2 (LDG2-S, port 8082). **Consumer / caller:** S1 (Customer & Account).
+
+    When S1 opens a new bank account it tells S2 that the account was created and gives S2 the account id.
+    S1 calls this endpoint **after** the account was saved in its own database.
+
+    The endpoint is idempotent: sending the same `account_id` again (a retry) is a success and changes nothing.
+
+    The path is a proposal of the S1 team; it must be confirmed with the S2 team (session 4).
+servers:
+  - url: http://localhost:8082
+    description: S2 on a developer machine
+tags:
+  - name: accounts
+paths:
+  /api/v1/accounts:
+    post:
+      tags: [accounts]
+      operationId: registerCreatedAccount
+      summary: S1 tells S2 that a bank account was created
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountCreated'
+            example:
+              account_id: 0192a7e4-6b1d-7c3e-9a41-2f5d8e0b7c11
+      responses:
+        '204':
+          description: S2 knows the account now (also returned when it already knew it).
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/IdempotencyKeyReused'
+components:
+  parameters:
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: Passed on from the request that opened the account (GEN-08).
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: Same key and same body give the same answer; same key with another body gives 409 (GEN-07).
+      schema:
+        type: string
+  headers:
+    CorrelationId:
+      description: The correlation id of this request.
+      schema:
+        type: string
+  schemas:
+    AccountCreated:
+      type: object
+      required: [account_id]
+      additionalProperties: false
+      properties:
+        account_id:
+          type: string
+          format: uuid
+          description: Id of the new account in S1 (the same id is used by S2 and S3).
+    Problem:
+      type: object
+      description: RFC 9457 problem details (GEN-06).
+      required: [type, title, status, code, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+        detail:
+          type: string
+        correlation_id:
+          type: [string, 'null']
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+  responses:
+    ValidationError:
+      description: Missing or malformed `account_id`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/validation-error
+            title: Validation error
+            status: 400
+            code: VALIDATION_ERROR
+            detail: Invalid or incomplete input
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+    IdempotencyKeyReused:
+      description: The same Idempotency-Key was used with a different body.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/idempotency-key-reused
+            title: Idempotency key reused
+            status: 409
+            code: IDEMPOTENCY_KEY_REUSED
+            detail: This key was already used with a different request body
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
