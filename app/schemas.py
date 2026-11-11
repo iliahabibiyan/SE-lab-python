@@ -80,6 +80,16 @@ class UserCreate(BaseModel):
         return v
 
 
+class UserUpdate(BaseModel):
+    """Request body of PUT /api/v1/users/{user_id} (US4): the only fields a user may change."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    phone_number: str
+    address: str
+    postal_code: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
