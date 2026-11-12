@@ -1,0 +1,35 @@
+meta {
+  name: Update user - invalid phone number (400)
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/api/v1/users/{{userId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "phone_number": "123",
+    "address": "تهران، خیابان انقلاب، پلاک ۵",
+    "postal_code": "1946813561"
+  }
+}
+
+tests {
+  test("400 VALIDATION_ERROR pointing at phone_number", function () {
+    expect(res.status).to.equal(400);
+    expect(res.body.code).to.equal("VALIDATION_ERROR");
+    expect(res.body.errors[0].field).to.equal("phone_number");
+  });
+}
