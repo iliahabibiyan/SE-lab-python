@@ -86,8 +86,39 @@ class UserUpdate(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     phone_number: str
-    address: str
+    address: str = Field(min_length=5, max_length=255)
     postal_code: str
+
+    # --- normalization (runs before the checks below) ---
+    @field_validator("postal_code", mode="before")
+    @classmethod
+    def clean_digits(cls, v):
+        return normalize_digits(v) if isinstance(v, str) else v
+
+    @field_validator("phone_number", mode="before")
+    @classmethod
+    def clean_phone(cls, v):
+        return normalize_phone(v) if isinstance(v, str) else v
+
+    @field_validator("address", mode="before")
+    @classmethod
+    def clean_text(cls, v):
+        return normalize_text(v) if isinstance(v, str) else v
+
+    # --- validation ---
+    @field_validator("phone_number")
+    @classmethod
+    def check_phone(cls, v: str) -> str:
+        if not is_valid_phone(v):
+            raise ValueError("شماره موبایل نامعتبر است")
+        return v
+
+    @field_validator("postal_code")
+    @classmethod
+    def check_postal_code(cls, v: str) -> str:
+        if not is_valid_postal_code(v):
+            raise ValueError("کد پستی نامعتبر است")
+        return v
 
 
 class UserResponse(BaseModel):
