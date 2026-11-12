@@ -11,7 +11,7 @@ from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
 from app.permissions import ensure_can_view_user, is_admin
-from app.schemas import UserCreate, UserListResponse, UserResponse
+from app.schemas import UserCreate, UserListResponse, UserResponse, UserUpdate
 from app.security import hash_password
 from app.validators import is_valid_national_code, normalize_digits
 
@@ -98,3 +98,25 @@ def get_user(
     profile_cache.set(key, profile)
     response.headers["X-Cache"] = "MISS"
     return profile
+
+
+@router.put("/{user_id}", response_model=UserResponse)
+def update_user(
+    user_id: UUID,
+    body: UserUpdate,
+    current_user: User = Depends(get_current_user),  # login is required; who may edit whom: task 4.3
+    db: Session = Depends(get_db),
+):
+    """US4: update the phone number, address and postal code of a user."""
+    key = str(user_id)
+    user = db.get(User, key)
+    if user is None:
+        raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
+
+    user.phone_number = body.phone_number
+    user.address = body.address
+    user.postal_code = body.postal_code
+    db.commit()
+    db.refresh(user)
+    profile_cache.delete(key)  # the cached profile (task 3.5) is old now
+    return user
