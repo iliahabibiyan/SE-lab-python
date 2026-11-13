@@ -137,9 +137,15 @@ def update_user_status(
 ):
     """US5: change the status of a user (ACTIVE, INACTIVE or BLOCKED). The accounts of the user are not touched."""
     key = str(user_id)
+    if key == current_user.id:  # rule: nobody changes his own status (a manager must not lock himself out)
+        raise ApiError(409, "CONFLICT", "نمی‌توانید وضعیت خودتان را تغییر دهید")
+
     user = db.get(User, key)
     if user is None:
         raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
+
+    if user.status == body.status:  # nothing to change: answer 200 and do nothing else
+        return user
 
     old_status = user.status
     user.status = body.status
