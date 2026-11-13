@@ -1,6 +1,8 @@
+import json
+import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -11,11 +13,12 @@ from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
 from app.permissions import ensure_can_edit_user, ensure_can_view_user, is_admin
-from app.schemas import UserCreate, UserListResponse, UserResponse, UserUpdate
+from app.schemas import UserCreate, UserListResponse, UserResponse, UserStatusUpdate, UserUpdate
 from app.security import hash_password
 from app.validators import is_valid_national_code, normalize_digits
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
+logger = logging.getLogger("labbank")
 
 DUPLICATE_NATIONAL_CODE = "کد ملی تکراری است"
 
@@ -121,4 +124,42 @@ def update_user(
     db.commit()
     db.refresh(user)
     profile_cache.delete(key)  # the cached profile (task 3.5) is old now
+    return user
+
+
+@router.patch("/{user_id}/status", response_model=UserResponse)
+def update_user_status(
+    user_id: UUID,
+    body: UserStatusUpdate,
+    request: Request,
+    current_user: User = Depends(get_current_user),  # login is required; who may call it: task 5.3
+    db: Session = Depends(get_db),
+):
+    """US5: change the status of a user (ACTIVE, INACTIVE or BLOCKED). The accounts of the user are not touched."""
+    key = str(user_id)
+    user = db.get(User, key)
+    if user is None:
+        raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
+
+    old_status = user.status
+    user.status = body.status
+    db.commit()
+    db.refresh(user)
+    profile_cache.delete(key)  # the cached profile (task 3.5) is old now
+
+    logger.info(  # who changed what and why (a real audit table is a possible later task)
+        json.dumps(
+            {
+                "level": "INFO",
+                "service": "S1-ACC",
+                "event": "user_status_changed",
+                "user_id": key,
+                "old_status": old_status,
+                "new_status": user.status,
+                "changed_by": current_user.id,
+                "reason": body.reason,
+                "correlation_id": request.state.correlation_id,
+            }
+        )
+    )
     return user
