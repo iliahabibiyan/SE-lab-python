@@ -1,0 +1,36 @@
+meta {
+  name: Update another user's profile (403)
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/api/v1/users/{{otherUserId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "phone_number": "09129998877",
+    "address": "تهران، خیابان انقلاب، پلاک ۵",
+    "postal_code": "1946813561"
+  }
+}
+
+tests {
+  // the logged-in user is a normal user, so he can not edit the profile of "users/4-register-other-user"
+  test("403 FORBIDDEN with problem+json body", function () {
+    expect(res.status).to.equal(403);
+    expect(res.headers["content-type"]).to.contain("application/problem+json");
+    expect(res.body.code).to.equal("FORBIDDEN");
+  });
+}

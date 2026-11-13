@@ -10,7 +10,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
-from app.permissions import ensure_can_view_user, is_admin
+from app.permissions import ensure_can_edit_user, ensure_can_view_user, is_admin
 from app.schemas import UserCreate, UserListResponse, UserResponse, UserUpdate
 from app.security import hash_password
 from app.validators import is_valid_national_code, normalize_digits
@@ -104,11 +104,13 @@ def get_user(
 def update_user(
     user_id: UUID,
     body: UserUpdate,
-    current_user: User = Depends(get_current_user),  # login is required; who may edit whom: task 4.3
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """US4: update the phone number, address and postal code of a user."""
+    """US4: update the phone number, address and postal code (own profile, or any profile for an ADMIN)."""
     key = str(user_id)
+    ensure_can_edit_user(current_user, key)  # before the lookup: no hint whether the id exists
+
     user = db.get(User, key)
     if user is None:
         raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
