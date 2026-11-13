@@ -21,7 +21,247 @@ tags:
     description: Customers (registration, profile, status)
   - name: accounts
     description: Bank accounts (loop endpoint for S2, transfer check for S3)
-paths: {}
+paths:
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Log in with national code and password
+      description: |
+        Only ACTIVE users get a token. After 5 wrong passwords the account is locked for 15 minutes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              national_code: '0013542419'
+              password: Str0ng-pass1
+      responses:
+        '200':
+          description: Tokens of the user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '429':
+          $ref: '#/components/responses/LoginLocked'
+  /auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refreshToken
+      summary: Exchange a refresh token for a new pair of tokens
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+            example:
+              refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signature
+      responses:
+        '200':
+          description: New tokens.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /auth/me:
+    get:
+      tags: [auth]
+      operationId: getCurrentUser
+      summary: Profile of the logged-in user
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The current user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /users:
+    post:
+      tags: [users]
+      operationId: registerUser
+      summary: Register a new user
+      description: The status of a new user is ACTIVE and the role is USER. The national code must be unique.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+            example:
+              national_code: '0013542419'
+              name: Ali Rezaei
+              birth_date: '1995-03-21'
+              phone_number: '09123456789'
+              address: Tehran, Azadi St., No. 10
+              postal_code: '1593656789'
+              password: Str0ng-pass1
+      responses:
+        '201':
+          description: The new user.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+    get:
+      tags: [users]
+      operationId: listUsers
+      summary: List or search users
+      description: |
+        A normal user only sees his own record; an ADMIN sees everybody.
+        Results are ordered by id.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: national_code
+          in: query
+          required: false
+          description: Exact national code to look for (Persian digits are accepted).
+          schema:
+            type: string
+            pattern: '^[0-9]{10}$'
+          example: '0013542419'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200':
+          description: One page of users.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserList'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /users/{user_id}:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    get:
+      tags: [users]
+      operationId: getUser
+      summary: Profile of a user
+      description: |
+        A user can read his own profile; an ADMIN can read any profile. A normal user gets 403 for any
+        other id, even when the id does not exist. The answer is cached for a short time (header `X-Cache`).
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: The user. No sensitive field (password hash, lock counters) is returned.
+          headers:
+            X-Cache:
+              description: HIT when the answer came from the cache, MISS otherwise.
+              schema:
+                type: string
+                enum: [HIT, MISS]
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [users]
+      operationId: updateUser
+      summary: Update the contact information of a user
+      description: |
+        Replaces the phone number, address and postal code (all three are required).
+        Other fields can not be changed here. A user can edit his own profile; an ADMIN can edit any profile.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+            example:
+              phone_number: '09129998877'
+              address: Tehran, Enghelab St., No. 5
+              postal_code: '1946813561'
+      responses:
+        '200':
+          description: The user with the new values.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /users/{user_id}/status:
+    parameters:
+      - $ref: '#/components/parameters/UserId'
+    patch:
+      tags: [users]
+      operationId: updateUserStatus
+      summary: Planned - change the status of a user
+      description: Only ADMIN, branch manager or compliance officer. A BLOCKED or INACTIVE user can not log in.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserStatusUpdate'
+            example:
+              status: BLOCKED
+              reason: Court order
+      responses:
+        '200':
+          description: The user with the new status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
 components:
   securitySchemes:
     bearerAuth:
