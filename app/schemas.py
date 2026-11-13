@@ -121,6 +121,15 @@ class UserUpdate(BaseModel):
         return v
 
 
+class UserStatusUpdate(BaseModel):
+    """Request body of PATCH /api/v1/users/{user_id}/status (US5)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: str  # ACTIVE, INACTIVE or BLOCKED (checked in task 5.2)
+    reason: str | None = None
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
