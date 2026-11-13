@@ -1,0 +1,447 @@
+openapi: 3.1.0
+info:
+  title: S1 - Customer & Account Management (LabBank)
+  version: 1.0.0
+  description: |
+    Contract of the S1 service (ACC1-S). It lists all MVP endpoints: the ones already implemented and the
+    planned ones (marked "Planned").
+
+    Standards of the project document (section 3) are followed: paths under `/api/v1`, money as
+    `{amount, currency}` (integer Rial), UUID ids, ISO 8601 UTC time, RFC 9457 errors with a `code`,
+    cursor pagination (`limit` max 200 + `cursor`), `snake_case` field names.
+
+    Validation errors are `400 VALIDATION_ERROR` (GEN-06).
+servers:
+  - url: http://localhost:8081/api/v1
+    description: S1 on a developer machine
+tags:
+  - name: auth
+    description: Login, refresh and the current user
+  - name: users
+    description: Customers (registration, profile, status)
+  - name: accounts
+    description: Bank accounts (loop endpoint for S2, transfer check for S3)
+paths: {}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    UserId:
+      name: user_id
+      in: path
+      required: true
+      description: Id of the user.
+      schema:
+        type: string
+        format: uuid
+    AccountId:
+      name: account_id
+      in: path
+      required: true
+      description: Id of the account.
+      schema:
+        type: string
+        format: uuid
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Page size.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: The `next_cursor` of the previous page.
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: Same key and same body give the same answer; same key with another body gives 409 IDEMPOTENCY_KEY_REUSED.
+      schema:
+        type: string
+  responses:
+    ValidationError:
+      description: Invalid or incomplete input.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/validation-error
+            title: Validation error
+            status: 400
+            code: VALIDATION_ERROR
+            detail: Invalid or incomplete input
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+            errors:
+              - field: phone_number
+                message: Phone number is not valid
+    Unauthorized:
+      description: Wrong credentials, or the token is missing, expired or not valid.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/unauthorized
+            title: Unauthorized
+            status: 401
+            code: UNAUTHORIZED
+            detail: Token is not valid
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+    Forbidden:
+      description: The user is not allowed to do this (not the owner, not an admin, or not ACTIVE).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/forbidden
+            title: Forbidden
+            status: 403
+            code: FORBIDDEN
+            detail: You are not allowed to do this
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+    NotFound:
+      description: The resource does not exist.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/not-found
+            title: Not found
+            status: 404
+            code: NOT_FOUND
+            detail: No resource with this id
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+    Conflict:
+      description: Conflict with the current state (for example a duplicate national code).
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/conflict
+            title: Conflict
+            status: 409
+            code: CONFLICT
+            detail: National code already exists
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+    LoginLocked:
+      description: Too many wrong passwords; the account is locked for a while.
+      headers:
+        Retry-After:
+          description: Seconds until the lock ends.
+          schema:
+            type: integer
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            type: https://errors.labbank.example/login-temporarily-locked
+            title: Login temporarily locked
+            status: 429
+            code: LOGIN_TEMPORARILY_LOCKED
+            detail: Too many failed attempts, try again later
+            correlation_id: 0192a7e5-3b0d-7c55-9a51-0c7e2b1d8f40
+  schemas:
+    Problem:
+      type: object
+      description: RFC 9457 problem details (GEN-06).
+      required: [type, title, status, code, detail]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+        code:
+          type: string
+          description: A code of the shared list (VALIDATION_ERROR, UNAUTHORIZED, FORBIDDEN, NOT_FOUND, CONFLICT, ...) or a service code.
+        detail:
+          type: string
+        correlation_id:
+          type: [string, 'null']
+        errors:
+          type: array
+          description: Only for VALIDATION_ERROR.
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+    Money:
+      type: object
+      required: [amount, currency]
+      properties:
+        amount:
+          type: integer
+          format: int64
+          minimum: 0
+          description: Amount in Rial. Never a float (GEN-03).
+        currency:
+          type: string
+          enum: [IRR]
+    Sheba:
+      type: string
+      pattern: '^IR[0-9]{24}$'
+      description: IBAN in the Iranian format. Digits 5 to 7 are the bank code; LabBank is `099`.
+    UserStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, BLOCKED]
+    AccountStatus:
+      type: string
+      enum: [ACTIVE, INACTIVE, BLOCKED]
+    LoginRequest:
+      type: object
+      required: [national_code, password]
+      additionalProperties: false
+      properties:
+        national_code:
+          type: string
+        password:
+          type: string
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      additionalProperties: false
+      properties:
+        refresh_token:
+          type: string
+    TokenResponse:
+      type: object
+      required: [access_token, refresh_token, token_type, expires_in]
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        token_type:
+          type: string
+          enum: [bearer]
+        expires_in:
+          type: integer
+          description: Lifetime of the access token in seconds.
+      examples:
+        - access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e30.signature
+          refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.e31.signature
+          token_type: bearer
+          expires_in: 900
+    User:
+      type: object
+      required: [id, national_code, name, birth_date, status, phone_number, address, postal_code, role]
+      properties:
+        id:
+          type: string
+          format: uuid
+        national_code:
+          type: string
+          pattern: '^[0-9]{10}$'
+        name:
+          type: string
+          maxLength: 100
+        birth_date:
+          type: string
+          format: date
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        phone_number:
+          type: string
+          pattern: '^09[0-9]{9}$'
+        address:
+          type: string
+          maxLength: 255
+        postal_code:
+          type: string
+          pattern: '^[0-9]{10}$'
+        role:
+          type: string
+          enum: [USER, ADMIN]
+      examples:
+        - id: 0192a7e4-0000-7000-8000-000000000001
+          national_code: '0013542419'
+          name: Ali Rezaei
+          birth_date: '1995-03-21'
+          status: ACTIVE
+          phone_number: '09123456789'
+          address: Tehran, Azadi St., No. 10
+          postal_code: '1593656789'
+          role: USER
+    UserCreate:
+      type: object
+      required: [national_code, name, birth_date, phone_number, address, postal_code, password]
+      additionalProperties: false
+      properties:
+        national_code:
+          type: string
+          pattern: '^[0-9]{10}$'
+          description: Valid Iranian national code (check digit); unique.
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        birth_date:
+          type: string
+          format: date
+          description: Not in the future.
+        phone_number:
+          type: string
+          pattern: '^09[0-9]{9}$'
+        address:
+          type: string
+          minLength: 5
+          maxLength: 255
+        postal_code:
+          type: string
+          pattern: '^[0-9]{10}$'
+        password:
+          type: string
+          minLength: 8
+          description: At most 72 bytes (bcrypt).
+    UserUpdate:
+      type: object
+      required: [phone_number, address, postal_code]
+      additionalProperties: false
+      properties:
+        phone_number:
+          type: string
+          pattern: '^09[0-9]{9}$'
+        address:
+          type: string
+          minLength: 5
+          maxLength: 255
+        postal_code:
+          type: string
+          pattern: '^[0-9]{10}$'
+    UserStatusUpdate:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status:
+          $ref: '#/components/schemas/UserStatus'
+        reason:
+          type: string
+          maxLength: 255
+          description: Optional reason, kept in the audit log.
+    UserList:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+        next_cursor:
+          type: [string, 'null']
+          description: Null on the last page.
+    Account:
+      type: object
+      required: [id, user_id, sheba_number, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+          description: The owner.
+        sheba_number:
+          $ref: '#/components/schemas/Sheba'
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+        exceptions:
+          type: array
+          description: Only with `include=exceptions` when S6 answered. The items are the exceptions registered by S6.
+          items:
+            type: object
+        exceptions_available:
+          type: boolean
+          description: Only with `include=exceptions`. False when S6 did not answer.
+      examples:
+        - id: 0192a7e4-6b1d-7c3e-9a41-2f5d8e0b7c11
+          user_id: 0192a7e4-0000-7000-8000-000000000001
+          sheba_number: IR740990000000000000000001
+          status: ACTIVE
+    AccountCreate:
+      type: object
+      required: [user_id]
+      additionalProperties: false
+      properties:
+        user_id:
+          type: string
+          format: uuid
+    AccountList:
+      type: object
+      required: [items, next_cursor]
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Account'
+        next_cursor:
+          type: [string, 'null']
+    AccountStatusResponse:
+      type: object
+      required: [status]
+      properties:
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+    AccountStatusUpdate:
+      type: object
+      required: [status]
+      additionalProperties: false
+      properties:
+        status:
+          $ref: '#/components/schemas/AccountStatus'
+    TransferCheckRequest:
+      type: object
+      required: [source_sheba, destination_sheba]
+      additionalProperties: false
+      properties:
+        source_sheba:
+          $ref: '#/components/schemas/Sheba'
+        destination_sheba:
+          $ref: '#/components/schemas/Sheba'
+    TransferCheckResult:
+      type: object
+      required: [source, destination]
+      properties:
+        source:
+          type: object
+          required: [account_id, active, limit]
+          properties:
+            account_id:
+              type: string
+              format: uuid
+            active:
+              type: boolean
+            limit:
+              $ref: '#/components/schemas/Money'
+        destination:
+          type: object
+          required: [found, account_id, active]
+          properties:
+            found:
+              type: boolean
+            account_id:
+              type: [string, 'null']
+              format: uuid
+            active:
+              type: [boolean, 'null']
