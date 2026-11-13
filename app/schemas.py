@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -126,8 +127,14 @@ class UserStatusUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    status: str  # ACTIVE, INACTIVE or BLOCKED (checked in task 5.2)
-    reason: str | None = None
+    status: Literal["ACTIVE", "INACTIVE", "BLOCKED"]  # any other value is rejected (400)
+    reason: str | None = Field(default=None, max_length=255)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def clean_reason(cls, v):
+        # extra spaces are removed; a reason with only spaces means "no reason"
+        return (normalize_text(v) or None) if isinstance(v, str) else v
 
 
 class UserResponse(BaseModel):
