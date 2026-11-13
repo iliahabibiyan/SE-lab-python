@@ -1,0 +1,38 @@
+meta {
+  name: Change user status - BLOCKED (admin)
+  type: http
+  seq: 1
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/{{otherUserId}}/status
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "BLOCKED",
+    "reason": "bruno test"
+  }
+}
+
+tests {
+  // needs an ADMIN token. First run the whole collection once (these requests get 403), then make the Bruno user
+  // an admin and run only this folder again:
+  //   docker compose exec db psql -U labbank -d s1_accounts -c "update users set role = 'ADMIN' where id = (select id from users order by id desc limit 1);"
+  // (the newest user is the one registered by "users/4-register-other-user"; if you want the other one use its national code)
+  test("200 OK and the status is BLOCKED", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.id).to.equal(bru.getVar("otherUserId"));
+    expect(res.body.status).to.equal("BLOCKED");
+  });
+}

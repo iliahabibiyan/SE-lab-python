@@ -1,0 +1,33 @@
+meta {
+  name: Change user status - back to ACTIVE (admin)
+  type: http
+  seq: 2
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/{{otherUserId}}/status
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "ACTIVE",
+    "reason": "bruno test"
+  }
+}
+
+tests {
+  test("200 OK and the status is ACTIVE again", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.status).to.equal("ACTIVE");
+  });
+}
