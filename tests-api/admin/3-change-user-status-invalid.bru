@@ -1,0 +1,37 @@
+meta {
+  name: Change user status - invalid value (400)
+  type: http
+  seq: 3
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/{{otherUserId}}/status
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "DELETED",
+    "reason": "bruno test"
+  }
+}
+
+tests {
+  // needs an ADMIN token. First run the whole collection once (these requests get 403), then make the Bruno user
+  // an admin and run only this folder again:
+  //   docker compose exec db psql -U labbank -d s1_accounts -c "update users set role = 'ADMIN' where id = (select id from users order by id desc limit 1);"
+  test("400 VALIDATION_ERROR pointing at status", function () {
+    expect(res.status).to.equal(400);
+    expect(res.body.code).to.equal("VALIDATION_ERROR");
+    expect(res.body.errors[0].field).to.equal("status");
+  });
+}
