@@ -12,7 +12,7 @@ from app.database import get_db
 from app.dependencies import get_current_user
 from app.errors import ApiError
 from app.models import User
-from app.permissions import ensure_can_edit_user, ensure_can_view_user, is_admin
+from app.permissions import ensure_can_edit_user, ensure_can_view_user, is_admin, require_status_manager
 from app.schemas import UserCreate, UserListResponse, UserResponse, UserStatusUpdate, UserUpdate
 from app.security import hash_password
 from app.validators import is_valid_national_code, normalize_digits
@@ -132,7 +132,7 @@ def update_user_status(
     user_id: UUID,
     body: UserStatusUpdate,
     request: Request,
-    current_user: User = Depends(get_current_user),  # login is required; who may call it: task 5.3
+    current_user: User = Depends(require_status_manager),  # only ADMIN, MANAGER or OFFICER
     db: Session = Depends(get_db),
 ):
     """US5: change the status of a user (ACTIVE, INACTIVE or BLOCKED). The accounts of the user are not touched."""
