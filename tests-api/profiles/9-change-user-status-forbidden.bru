@@ -1,0 +1,35 @@
+meta {
+  name: Change user status - normal user (403)
+  type: http
+  seq: 9
+}
+
+patch {
+  url: {{baseUrl}}/api/v1/users/{{otherUserId}}/status
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "status": "BLOCKED",
+    "reason": "bruno test"
+  }
+}
+
+tests {
+  // the logged-in user is a normal user, so he is not allowed to change statuses
+  test("403 FORBIDDEN with problem+json body", function () {
+    expect(res.status).to.equal(403);
+    expect(res.headers["content-type"]).to.contain("application/problem+json");
+    expect(res.body.code).to.equal("FORBIDDEN");
+  });
+}
