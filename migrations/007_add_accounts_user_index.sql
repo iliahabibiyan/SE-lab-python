@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts (user_id)
