@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import Integer, String
+from sqlalchemy import ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -22,3 +22,12 @@ class User(Base):
     failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(default=None)  # UTC
     role: Mapped[str] = mapped_column(String(10), default="USER")  # USER or ADMIN
+
+
+class Account(Base):
+    __tablename__ = "accounts"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))  # the owner
+    sheba_number: Mapped[str] = mapped_column(String(26), unique=True)
+    status: Mapped[str] = mapped_column(String(10), default="ACTIVE")  # ACTIVE, INACTIVE or BLOCKED
