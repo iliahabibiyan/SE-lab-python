@@ -155,7 +155,11 @@ class UserListResponse(BaseModel):
     items: list[UserResponse]
     next_cursor: str | None = None  # pass it as ?cursor=... to get the next page; null on the last page
 
-
+class AccountCreate(BaseModel):
+    """Request body of POST /api/v1/accounts (US6)."""
+    model_config = ConfigDict(extra="forbid")
+    user_id: UUID  # the owner
+    
 class AccountResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
