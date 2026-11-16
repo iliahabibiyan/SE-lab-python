@@ -33,3 +33,14 @@ def get_current_user(
         raise ApiError(403, "FORBIDDEN", "حساب کاربری فعال نیست")
 
     return user
+
+
+def require_roles(*roles: str):
+    """Dependency factory: only logged-in users with one of `roles` may call the endpoint (403 for the others)."""
+
+    def checker(current_user: User = Depends(get_current_user)) -> User:
+        if current_user.role not in roles:
+            raise ApiError(403, "FORBIDDEN", "شما اجازه‌ی انجام این کار را ندارید")
+        return current_user
+
+    return checker
