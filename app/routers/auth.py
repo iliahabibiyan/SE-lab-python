@@ -31,10 +31,10 @@ INACTIVE_MESSAGES = {
 DUMMY_HASH = hash_password("dummy-password-for-timing")
 
 
-def build_tokens(user_id: str) -> TokenResponse:
+def build_tokens(user: User) -> TokenResponse:
     return TokenResponse(
-        access_token=create_access_token(user_id),
-        refresh_token=create_refresh_token(user_id),
+        access_token=create_access_token(user.id, user.token_version),
+        refresh_token=create_refresh_token(user.id, user.token_version),
         expires_in=ACCESS_TOKEN_MINUTES * 60,
     )
 
@@ -87,7 +87,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
     if user.status != "ACTIVE":
         raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "حساب کاربری فعال نیست"))
 
-    return build_tokens(user.id)
+    return build_tokens(user)
 
 
 @router.post("/refresh", response_model=TokenResponse)
@@ -101,9 +101,11 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
     user = db.get(User, payload["sub"])
     if user is None:
         raise ApiError(401, "UNAUTHORIZED", "توکن نامعتبر است")
+    if payload.get("ver", 0) != user.token_version:  # revoked: the user was blocked/deactivated after login
+        raise ApiError(401, "UNAUTHORIZED", "توکن باطل شده است؛ دوباره وارد شوید")
     if user.status != "ACTIVE":  # blocked/inactive users can not extend their session
         raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "حساب کاربری فعال نیست"))
-    return build_tokens(user.id)
+    return build_tokens(user)
 
 
 @router.get("/me", response_model=UserResponse)

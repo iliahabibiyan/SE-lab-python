@@ -1,0 +1,21 @@
+meta {
+  name: Get account - ACTIVE demo account
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/accounts/0192a7e4-6b1d-7c3e-9a41-2f5d8e0b7c11
+  body: none
+  auth: none
+}
+
+tests {
+  // needs the demo data: start the service with docker compose (SEED_DATA=1)
+  test("200 OK with the account and its status", function () {
+    expect(res.status).to.equal(200);
+    expect(res.body.id).to.equal("0192a7e4-6b1d-7c3e-9a41-2f5d8e0b7c11");
+    expect(res.body.status).to.equal("ACTIVE");
+    expect(res.body.sheba_number).to.equal("IR740990000000000000000001");
+  });
+}

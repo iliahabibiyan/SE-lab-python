@@ -135,7 +135,7 @@ class UserStatusUpdate(BaseModel):
     def clean_reason(cls, v):
         # extra spaces are removed; a reason with only spaces means "no reason"
         return (normalize_text(v) or None) if isinstance(v, str) else v
-
+ 
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -154,3 +154,19 @@ class UserResponse(BaseModel):
 class UserListResponse(BaseModel):
     items: list[UserResponse]
     next_cursor: str | None = None  # pass it as ?cursor=... to get the next page; null on the last page
+
+
+class AccountResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    user_id: UUID
+    sheba_number: str
+    status: str
+
+
+class AccountDetailResponse(AccountResponse):
+    """Account plus the optional data of ?include=exceptions (left out of the JSON when None)."""
+
+    exceptions: list[dict] | None = None
+    exceptions_available: bool | None = None  # False when S6 did not answer

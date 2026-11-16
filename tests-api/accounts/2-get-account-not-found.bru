@@ -1,0 +1,19 @@
+meta {
+  name: Get account - unknown id (404)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/accounts/00000000-0000-7000-8000-000000000000
+  body: none
+  auth: none
+}
+
+tests {
+  test("404 NOT_FOUND with problem+json body", function () {
+    expect(res.status).to.equal(404);
+    expect(res.headers["content-type"]).to.contain("application/problem+json");
+    expect(res.body.code).to.equal("NOT_FOUND");
+  });
+}

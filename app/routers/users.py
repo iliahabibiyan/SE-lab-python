@@ -149,6 +149,8 @@ def update_user_status(
 
     old_status = user.status
     user.status = body.status
+    if body.status in ("INACTIVE", "BLOCKED"):
+        user.token_version += 1  # revokes every access and refresh token the user has now
     db.commit()
     db.refresh(user)
     profile_cache.delete(key)  # the cached profile (task 3.5) is old now

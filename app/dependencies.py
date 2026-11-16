@@ -29,7 +29,10 @@ def get_current_user(
     if user is None:
         raise ApiError(401, "UNAUTHORIZED", "توکن نامعتبر است")
 
-    if user.status != "ACTIVE":  # e.g. blocked after the token was issued
+    if payload.get("ver", 0) != user.token_version:  # the user was blocked/deactivated after the token was issued
+        raise ApiError(401, "UNAUTHORIZED", "توکن باطل شده است؛ دوباره وارد شوید")
+
+    if user.status != "ACTIVE":  # e.g. blocked directly in the database
         raise ApiError(403, "FORBIDDEN", "حساب کاربری فعال نیست")
 
     return user

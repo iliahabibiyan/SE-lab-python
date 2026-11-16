@@ -15,18 +15,19 @@ def get_secret() -> str:
     return secret
 
 
-def _create_token(user_id: str, token_type: str, lifetime: timedelta) -> str:
+def _create_token(user_id: str, token_type: str, lifetime: timedelta, token_version: int = 0) -> str:
     now = datetime.now(timezone.utc)
-    payload = {"sub": user_id, "type": token_type, "iat": now, "exp": now + lifetime}
+    # "ver" is the token_version of the user: when the user is blocked it grows and all older tokens die
+    payload = {"sub": user_id, "type": token_type, "ver": token_version, "iat": now, "exp": now + lifetime}
     return jwt.encode(payload, get_secret(), algorithm=ALGORITHM)
 
 
-def create_access_token(user_id: str) -> str:
-    return _create_token(user_id, "access", timedelta(minutes=ACCESS_TOKEN_MINUTES))
+def create_access_token(user_id: str, token_version: int = 0) -> str:
+    return _create_token(user_id, "access", timedelta(minutes=ACCESS_TOKEN_MINUTES), token_version)
 
 
-def create_refresh_token(user_id: str) -> str:
-    return _create_token(user_id, "refresh", timedelta(days=REFRESH_TOKEN_DAYS))
+def create_refresh_token(user_id: str, token_version: int = 0) -> str:
+    return _create_token(user_id, "refresh", timedelta(days=REFRESH_TOKEN_DAYS), token_version)
 
 
 def decode_token(token: str, token_type: str = "access") -> dict:

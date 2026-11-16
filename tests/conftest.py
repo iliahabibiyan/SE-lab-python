@@ -21,4 +21,5 @@ def client():
     with TestClient(app) as test_client:
         yield test_client
     with engine.begin() as conn:
+        conn.execute(text("DELETE FROM accounts"))  # accounts point to users: delete them first
         conn.execute(text("DELETE FROM users"))
