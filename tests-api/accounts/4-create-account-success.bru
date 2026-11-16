@@ -1,0 +1,36 @@
+meta {
+  name: Create account - for myself
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "user_id": "{{userId}}"
+  }
+}
+
+tests {
+  // run "users/1-register-success" and "auth/1-login-success" first (or run the whole collection)
+  test("201 Created with a valid Sheba and ACTIVE status", function () {
+    expect(res.status).to.equal(201);
+    expect(res.body.user_id).to.equal(bru.getVar("userId"));
+    expect(res.body.status).to.equal("ACTIVE");
+    expect(res.body.sheba_number).to.match(/^IR[0-9]{24}$/);
+    expect(res.body.sheba_number.substring(4, 7)).to.equal("099");
+  });
+}

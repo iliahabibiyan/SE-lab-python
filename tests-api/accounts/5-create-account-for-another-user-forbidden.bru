@@ -1,0 +1,34 @@
+meta {
+  name: Create account - for another user (403)
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/api/v1/accounts
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "user_id": "{{otherUserId}}"
+  }
+}
+
+tests {
+  // the logged-in user is a normal user, so he may open accounts only for himself
+  test("403 FORBIDDEN with problem+json body", function () {
+    expect(res.status).to.equal(403);
+    expect(res.headers["content-type"]).to.contain("application/problem+json");
+    expect(res.body.code).to.equal("FORBIDDEN");
+  });
+}
