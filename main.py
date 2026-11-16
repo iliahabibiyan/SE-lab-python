@@ -11,7 +11,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db, run_migrations
 from app.errors import ApiError, register_error_handlers
 from app.middleware import correlation_middleware
-from app.routers import auth, users
+from app.routers import accounts, auth, users
+from app.seed import seed_demo_data
 from app.tokens import get_secret
 
 
@@ -19,6 +20,8 @@ from app.tokens import get_secret
 async def lifespan(app: FastAPI):
     get_secret()  
     run_migrations()
+    if os.getenv("SEED_DATA") == "1":  # demo data for the neighbor teams (docker-compose turns it on)
+        seed_demo_data()
     yield
 
 
@@ -34,6 +37,7 @@ app.add_middleware(
 register_error_handlers(app)
 app.include_router(users.router)
 app.include_router(auth.router)
+app.include_router(accounts.router)
 
 
 @app.get("/health")
