@@ -22,7 +22,7 @@ class User(Base):
     failed_login_attempts: Mapped[int] = mapped_column(Integer, default=0)
     locked_until: Mapped[datetime | None] = mapped_column(default=None)  # UTC
     role: Mapped[str] = mapped_column(String(10), default="USER")  # USER or ADMIN
-
+    token_version: Mapped[int] = mapped_column(Integer, default=0)  # grows when the user is blocked: revokes tokens
 
 class Account(Base):
     __tablename__ = "accounts"
