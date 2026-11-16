@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -120,6 +121,21 @@ class UserUpdate(BaseModel):
             raise ValueError("کد پستی نامعتبر است")
         return v
 
+
+class UserStatusUpdate(BaseModel):
+    """Request body of PATCH /api/v1/users/{user_id}/status (US5)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    status: Literal["ACTIVE", "INACTIVE", "BLOCKED"]  # any other value is rejected (400)
+    reason: str | None = Field(default=None, max_length=255)
+
+    @field_validator("reason", mode="before")
+    @classmethod
+    def clean_reason(cls, v):
+        # extra spaces are removed; a reason with only spaces means "no reason"
+        return (normalize_text(v) or None) if isinstance(v, str) else v
+ 
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
