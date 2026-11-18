@@ -12,6 +12,7 @@ from app.dependencies import get_current_user
 from app.iban import generate_sheba
 from app.permissions import ensure_can_open_account
 from app.clients.s6_client import S6Client, S6Unavailable, get_s6_client
+from app.clients.s2_client import S2Client, S2Unavailable, get_s2_client
 from app.database import get_db
 from app.errors import ApiError
 from app.models import Account, User
@@ -66,8 +67,10 @@ def get_account(
 @router.post("", response_model=AccountResponse, status_code=201)
 def create_account(
     body: AccountCreate,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    s2: S2Client = Depends(get_s2_client),
 ):
     """US6: open a new account for an ACTIVE user. A customer opens it for himself; staff for anybody."""
     owner_id = str(body.user_id)
@@ -95,5 +98,20 @@ def create_account(
             db.rollback()
             continue
         db.refresh(account)
+        try:
+            s2.account_created(account.id, request.state.correlation_id)
+        except S2Unavailable as error:  # S2 must not break opening an account (BO-05); retrying later is another task
+            logger.warning(
+                json.dumps(
+                    {
+                        "level": "WARNING",
+                        "service": "S1-ACC",
+                        "event": "s2_unavailable",
+                        "correlation_id": request.state.correlation_id,
+                        "account_id": account.id,
+                        "error": str(error),
+                    }
+                )
+            )
         return account
     raise ApiError(503, "SERVICE_UNAVAILABLE", "ساخت شماره شبا ممکن نشد؛ دوباره تلاش کنید")
