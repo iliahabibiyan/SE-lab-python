@@ -87,7 +87,7 @@ def create_account(
         raise ApiError(409, "CONFLICT", f"هر کاربر حداکثر {MAX_ACCOUNTS_PER_USER} حساب می‌تواند داشته باشد")
 
     for _ in range(5):  # a Sheba collision is practically impossible, but the database would refuse it
-        account = Account(user_id=owner_id, sheba_number=generate_sheba())
+        account = Account(user_id=owner_id, sheba_number=generate_sheba(), account_type=body.account_type)
         db.add(account)
         try:
             db.commit()

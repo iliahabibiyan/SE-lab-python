@@ -31,3 +31,4 @@ class Account(Base):
     user_id: Mapped[str] = mapped_column(String(36), ForeignKey("users.id"))  # the owner
     sheba_number: Mapped[str] = mapped_column(String(26), unique=True)
     status: Mapped[str] = mapped_column(String(10), default="ACTIVE")  # ACTIVE, INACTIVE or BLOCKED
+    account_type: Mapped[str] = mapped_column(String(10), default="CURRENT")  # CURRENT, SAVINGS or DEPOSIT

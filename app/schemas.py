@@ -160,6 +160,7 @@ class AccountCreate(BaseModel):
     """Request body of POST /api/v1/accounts (US6)."""
     model_config = ConfigDict(extra="forbid")
     user_id: UUID  # the owner
+    account_type: Literal["CURRENT", "SAVINGS", "DEPOSIT"] = "CURRENT"  # current / savings / deposit
 
 
 class AccountResponse(BaseModel):
@@ -169,6 +170,7 @@ class AccountResponse(BaseModel):
     user_id: UUID
     sheba_number: str
     status: str
+    account_type: str
 
 
 class AccountDetailResponse(AccountResponse):
