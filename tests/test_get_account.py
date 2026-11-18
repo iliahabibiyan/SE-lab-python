@@ -27,6 +27,7 @@ def test_get_account_success(client):
         "user_id": user["id"],
         "sheba_number": SHEBA,
         "status": "ACTIVE",
+        "account_type": "CURRENT",
     }
 
 
