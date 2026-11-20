@@ -20,7 +20,7 @@ from app.tokens import get_secret
 async def lifespan(app: FastAPI):
     get_secret()  
     run_migrations()
-    if os.getenv("SEED_DATA") == "1":  # demo data for the neighbor teams (docker-compose turns it on)
+    if os.getenv("SEED_DATA") == "1":  # demo data (docker-compose turns it on)
         seed_demo_data()
     yield
 
