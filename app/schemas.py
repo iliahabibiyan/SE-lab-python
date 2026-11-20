@@ -171,10 +171,3 @@ class AccountResponse(BaseModel):
     sheba_number: str
     status: str
     account_type: str
-
-
-class AccountDetailResponse(AccountResponse):
-    """Account plus the optional data of ?include=exceptions (left out of the JSON when None)."""
-
-    exceptions: list[dict] | None = None
-    exceptions_available: bool | None = None  # False when S6 did not answer

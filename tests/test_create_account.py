@@ -55,10 +55,10 @@ def test_the_new_account_is_saved_and_can_be_read_back(client):
     stored = stored_accounts(me["id"])
     assert [(a.id, a.sheba_number, a.status) for a in stored] == [(body["id"], body["sheba_number"], "ACTIVE")]
 
-    loop_answer = client.get(f"{URL}/{body['id']}")  # the loop endpoint of S2 sees it
-    assert loop_answer.status_code == 200
-    assert loop_answer.json()["sheba_number"] == body["sheba_number"]
-
+    read_back = client.get(f"{URL}/{body['id']}")  # the same account can be read with GET /accounts/{id}
+    assert read_back.status_code == 200
+    assert read_back.json()["sheba_number"] == body["sheba_number"]
+ 
 
 def test_every_account_gets_a_different_id_and_sheba(client):
     me = register_user(client)
