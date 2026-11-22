@@ -18,19 +18,19 @@ USERS = [
     {
         "id": "0192a7e4-0000-7000-8000-000000000001",
         "national_code": "3740681241",
-        "name": "علی رضایی",
+        "name": "Ali Rezaei",
         "birth_date": date(1995, 3, 21),
         "phone_number": "09123456789",
-        "address": "تهران، خیابان آزادی، پلاک ۱۰",
+        "address": "Tehran, Azadi St., No. 10",
         "postal_code": "1593656789",
     },
     {
         "id": "0192a7e4-0000-7000-8000-000000000002",
         "national_code": "6907366258",
-        "name": "سارا احمدی",
+        "name": "Sara Ahmadi",
         "birth_date": date(1998, 7, 12),
         "phone_number": "09121234567",
-        "address": "تهران، خیابان ولیعصر، پلاک ۲۰",
+        "address": "Tehran, Valiasr St., No. 20",
         "postal_code": "1946813561",
     },
 ]
