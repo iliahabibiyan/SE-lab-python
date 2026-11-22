@@ -2,21 +2,19 @@ import json
 import logging
 import os
 from sqlalchemy import func, select         
-from typing import Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.dependencies import get_current_user
 from app.iban import generate_sheba
 from app.permissions import ensure_can_open_account
-from app.clients.s6_client import S6Client, S6Unavailable, get_s6_client
 from app.clients.s2_client import S2Client, S2Unavailable, get_s2_client
 from app.database import get_db
 from app.errors import ApiError
 from app.models import Account, User
-from app.schemas import AccountCreate, AccountDetailResponse, AccountResponse
+from app.schemas import AccountCreate, AccountResponse
 
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 logger = logging.getLogger("labbank")
@@ -25,43 +23,13 @@ MAX_ACCOUNTS_PER_USER = int(os.getenv("MAX_ACCOUNTS_PER_USER", "5"))
 ACCOUNT_NOT_FOUND = "Account not found"
 USER_NOT_FOUND = "User not found"
 
-@router.get("/{account_id}", response_model=AccountDetailResponse, response_model_exclude_none=True)
-def get_account(
-    account_id: UUID,
-    request: Request,
-    include: Literal["exceptions"] | None = Query(None, description="ask for extra data: exceptions (from S6)"),
-    db: Session = Depends(get_db),
-    s6: S6Client = Depends(get_s6_client),
-):
-    """Loop endpoint (S2 calls it): details and status of an account. Service to service, no user token.
-
-    With ?include=exceptions S1 also asks S6; if S6 is down the account is still returned.
-    """
+@router.get("/{account_id}", response_model=AccountResponse)
+def get_account(account_id: UUID, db: Session = Depends(get_db)):
+    """Details and status of an account. Service to service call (for example S2): no user token."""
     account = db.get(Account, str(account_id))
     if account is None:
         raise ApiError(404, "NOT_FOUND", ACCOUNT_NOT_FOUND)
-
-    result = AccountDetailResponse.model_validate(account)
-    if include == "exceptions":
-        try:
-            result.exceptions = s6.get_exceptions(str(account_id), request.state.correlation_id)
-            result.exceptions_available = True
-        except S6Unavailable as error:  # a neighbor problem must not break our own answer
-            result.exceptions_available = False
-            logger.warning(
-                json.dumps(
-                    {
-                        "level": "WARNING",
-                        "service": "S1-ACC",
-                        "event": "s6_unavailable",
-                        "correlation_id": request.state.correlation_id,
-                        "account_id": str(account_id),
-                        "error": str(error),
-                    }
-                )
-            )
-    return result
-
+    return account
 
 @router.post("", response_model=AccountResponse, status_code=201)
 def create_account(

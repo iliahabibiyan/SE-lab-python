@@ -2,12 +2,11 @@ import json
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request, Response
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.cache import profile_cache
 from app.database import get_db
 from app.dependencies import get_current_user
 from app.errors import ApiError
@@ -78,27 +77,17 @@ USER_NOT_FOUND = "User not found"
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
     user_id: UUID,
-    response: Response,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """US3: profile of one user (own profile, or any profile for an ADMIN). No sensitive fields are returned."""
     key = str(user_id)
-    ensure_can_view_user(current_user, key)  # checked on every request, also when the answer is cached
-
-    cached = profile_cache.get(key)
-    if cached is not None:
-        response.headers["X-Cache"] = "HIT"
-        return cached
+    ensure_can_view_user(current_user, key)  # before the lookup: no hint whether the id exists
 
     user = db.get(User, key)
-    if user is None:  # "not found" is never cached
+    if user is None:
         raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
-
-    profile = UserResponse.model_validate(user).model_dump(mode="json")
-    profile_cache.set(key, profile)
-    response.headers["X-Cache"] = "MISS"
-    return profile
+    return user
 
 
 @router.put("/{user_id}", response_model=UserResponse)
@@ -121,7 +110,6 @@ def update_user(
     user.postal_code = body.postal_code
     db.commit()
     db.refresh(user)
-    profile_cache.delete(key)  # the cached profile (task 3.5) is old now
     return user
 
 
@@ -151,7 +139,6 @@ def update_user_status(
         user.token_version += 1  # revokes every access and refresh token the user has now
     db.commit()
     db.refresh(user)
-    profile_cache.delete(key)  # the cached profile (task 3.5) is old now
 
     logger.info(  # who changed what and why (a real audit table is a possible later task)
         json.dumps(

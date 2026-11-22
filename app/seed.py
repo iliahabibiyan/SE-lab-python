@@ -1,4 +1,4 @@
-"""Demo data with FIXED ids, so that the neighbor teams can test against S1. Enabled with SEED_DATA=1."""
+"""Demo data with FIXED ids, so that S1 can be tried (and other teams can test against it) without creating data. Enabled with SEED_DATA=1."""
 
 import json
 import logging

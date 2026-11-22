@@ -50,20 +50,6 @@ def test_update_is_saved_in_the_database(client):
     assert user.postal_code == NEW_DATA["postal_code"]
 
 
-def test_cached_profile_is_refreshed_after_update(client):
-    me = register_user(client)
-    headers = auth_header(token_for(client))
-    url = f"{URL}/{me['id']}"
-    assert client.get(url, headers=headers).headers["X-Cache"] == "MISS"
-    assert client.get(url, headers=headers).headers["X-Cache"] == "HIT"
-
-    assert client.put(url, json=NEW_DATA, headers=headers).status_code == 200
-
-    after = client.get(url, headers=headers)
-    assert after.headers["X-Cache"] == "MISS"  # the update removed the old cached profile
-    assert after.json()["phone_number"] == NEW_DATA["phone_number"]
-
-
 def test_update_requires_login(client):
     me = register_user(client)
     assert client.put(f"{URL}/{me['id']}", json=NEW_DATA).status_code == 401

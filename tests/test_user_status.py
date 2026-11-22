@@ -177,18 +177,6 @@ def test_blocked_user_can_not_log_in_until_activated(client):
     assert login(client, national_code=OTHER_NATIONAL_CODE, password=PASSWORD).status_code == 200
 
 
-def test_cached_profile_shows_the_new_status(client):
-    headers, target = staff_and_target(client)
-    profile_url = f"{URL}/{target['id']}"
-    assert client.get(profile_url, headers=headers).json()["status"] == "ACTIVE"  # now cached
-
-    client.patch(status_url(target["id"]), json={"status": "INACTIVE"}, headers=headers)
-
-    after = client.get(profile_url, headers=headers)
-    assert after.headers["X-Cache"] == "MISS"
-    assert after.json()["status"] == "INACTIVE"
-
-
 # ---------- the accounts of the user are NOT changed ----------
 @pytest.mark.parametrize("new_status", ["INACTIVE", "BLOCKED"])
 def test_status_of_the_accounts_of_the_user_stays_the_same(client, new_status):
