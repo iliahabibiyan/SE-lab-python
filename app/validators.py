@@ -1,9 +1,9 @@
 import re
 
-# Persian (۰-۹) and Arabic-Indic (٠-٩) digits -> English digits
-_DIGITS = str.maketrans("۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩", "01234567890123456789")
-# Arabic letters that are often typed by mistake -> Persian letters
-_LETTERS = str.maketrans("يك", "یک")
+# Persian digits (U+06F0..U+06F9) and Arabic-Indic digits (U+0660..U+0669) -> English digits
+_DIGITS = {0x06F0 + i: ord("0") + i for i in range(10)} | {0x0660 + i: ord("0") + i for i in range(10)}
+# Arabic yeh (U+064A) and kaf (U+0643) are often typed by mistake -> Persian yeh (U+06CC) and kaf (U+06A9)
+_LETTERS = {0x064A: 0x06CC, 0x0643: 0x06A9}
 
 # Iranian postal code: first 4 digits from [1,3-9] (not all equal), 5th from [1,3,4,6-9], last 5 from [0,1,3-9]
 _POSTAL_PATTERN = re.compile(r"(?!(\d)\1{3})[13-9]{4}[1346-9][013-9]{5}")
