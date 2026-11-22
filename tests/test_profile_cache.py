@@ -89,17 +89,17 @@ def test_cached_profile_is_served_until_it_is_invalidated(client):
     user = register_user(client)
     headers = auth_header(token_for(client))
     url = f"/api/v1/users/{user['id']}"
-    assert client.get(url, headers=headers).json()["name"] == "علی رضایی"
+    assert client.get(url, headers=headers).json()["name"] == "Ali Rezaei"
 
-    update_user(NATIONAL_CODE, name="نام جدید")  # changed behind the cache's back
+    update_user(NATIONAL_CODE, name="New Name")  # changed behind the cache's back
     stale = client.get(url, headers=headers)
     assert stale.headers["X-Cache"] == "HIT"
-    assert stale.json()["name"] == "علی رضایی"
+    assert stale.json()["name"] == "Ali Rezaei"
 
     profile_cache.delete(user["id"])  # what US4/US5 must do after changing a user
     fresh = client.get(url, headers=headers)
     assert fresh.headers["X-Cache"] == "MISS"
-    assert fresh.json()["name"] == "نام جدید"
+    assert fresh.json()["name"] == "New Name"
 
 
 def test_not_found_is_not_cached(client):
