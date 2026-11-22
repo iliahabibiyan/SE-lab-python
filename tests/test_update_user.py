@@ -10,13 +10,14 @@ from tests.helpers import (
     make_admin,
     register_other_user,
     register_user,
+    to_persian_digits,
     token_for,
 )
 
 URL = "/api/v1/users"
 NEW_DATA = {
     "phone_number": "09129998877",
-    "address": "تهران، خیابان انقلاب، پلاک ۵",
+    "address": "Tehran, Enghelab St., No. 5",
     "postal_code": "1946813561",
 }
 
@@ -88,7 +89,7 @@ def test_update_with_missing_fields(client):
 def test_update_can_not_change_other_fields(client):
     me = register_user(client)
     headers = auth_header(token_for(client))
-    for extra in ({"national_code": "0499370899"}, {"role": "ADMIN"}, {"status": "BLOCKED"}, {"name": "نام دیگر"}):
+    for extra in ({"national_code": "0499370899"}, {"role": "ADMIN"}, {"status": "BLOCKED"}, {"name": "Other Name"}):
         response = client.put(f"{URL}/{me['id']}", json={**NEW_DATA, **extra}, headers=headers)
         assert response.status_code == 400, extra
     user = stored_user(NATIONAL_CODE)
@@ -99,7 +100,7 @@ def test_update_can_not_change_other_fields(client):
 
 def test_update_accepts_persian_digits(client):
     me = register_user(client)
-    payload = {**NEW_DATA, "phone_number": "۰۹۱۲۹۹۹۸۸۷۷", "postal_code": "۱۹۴۶۸۱۳۵۶۱"}
+    payload = {**NEW_DATA, "phone_number": to_persian_digits("09129998877"), "postal_code": to_persian_digits("1946813561")}
     response = client.put(f"{URL}/{me['id']}", json=payload, headers=auth_header(token_for(client)))
     assert response.status_code == 200
     assert response.json()["phone_number"] == "09129998877"

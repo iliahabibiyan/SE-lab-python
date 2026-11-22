@@ -48,21 +48,21 @@ class UserCreate(BaseModel):
     @classmethod
     def check_national_code(cls, v: str) -> str:
         if not is_valid_national_code(v):
-            raise ValueError("کد ملی نامعتبر است")
+            raise ValueError("National code is not valid")
         return v
 
     @field_validator("phone_number")
     @classmethod
     def check_phone(cls, v: str) -> str:
         if not is_valid_phone(v):
-            raise ValueError("شماره موبایل نامعتبر است")
+            raise ValueError("Phone number is not valid")
         return v
 
     @field_validator("postal_code")
     @classmethod
     def check_postal_code(cls, v: str) -> str:
         if not is_valid_postal_code(v):
-            raise ValueError("کد پستی نامعتبر است")
+            raise ValueError("Postal code is not valid")
         return v
 
     @field_validator("password")
@@ -70,14 +70,14 @@ class UserCreate(BaseModel):
     def check_password(cls, v: str) -> str:
         # bcrypt only uses the first 72 bytes (a Persian letter is 2 bytes)
         if len(v.encode("utf-8")) > 72:
-            raise ValueError("رمز عبور نباید بیشتر از ۷۲ بایت باشد")
+            raise ValueError("Password must not be longer than 72 bytes")
         return v
 
     @field_validator("birth_date")
     @classmethod
     def check_birth_date(cls, v: date) -> date:
         if v > date.today():
-            raise ValueError("تاریخ تولد نمی‌تواند در آینده باشد")
+            raise ValueError("Birth date can not be in the future")
         return v
 
 
@@ -111,14 +111,14 @@ class UserUpdate(BaseModel):
     @classmethod
     def check_phone(cls, v: str) -> str:
         if not is_valid_phone(v):
-            raise ValueError("شماره موبایل نامعتبر است")
+            raise ValueError("Phone number is not valid")
         return v
 
     @field_validator("postal_code")
     @classmethod
     def check_postal_code(cls, v: str) -> str:
         if not is_valid_postal_code(v):
-            raise ValueError("کد پستی نامعتبر است")
+            raise ValueError("Postal code is not valid")
         return v
 
 

@@ -19,11 +19,11 @@ def test_get_own_profile(client):
     body = response.json()
     assert body["id"] == user["id"]
     assert body["national_code"] == NATIONAL_CODE
-    assert body["name"] == "علی رضایی"
+    assert body["name"] == "Ali Rezaei"
     assert body["birth_date"] == "1995-03-21"
     assert body["status"] == "ACTIVE"
     assert body["phone_number"] == "09123456789"
-    assert body["address"] == "تهران، خیابان آزادی، پلاک ۱۰"
+    assert body["address"] == "Tehran, Azadi St., No. 10"
     assert body["postal_code"] == "1593656789"
 
 

@@ -20,9 +20,8 @@ router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 logger = logging.getLogger("labbank")
 MAX_ACCOUNTS_PER_USER = int(os.getenv("MAX_ACCOUNTS_PER_USER", "5"))
 
-ACCOUNT_NOT_FOUND = "حسابی با این شناسه یافت نشد"
-USER_NOT_FOUND = "کاربری با این شناسه یافت نشد"
-
+ACCOUNT_NOT_FOUND = "Account not found"
+USER_NOT_FOUND = "User not found"
 
 @router.get("/{account_id}", response_model=AccountResponse)
 def get_account(account_id: UUID, db: Session = Depends(get_db)):
@@ -51,11 +50,11 @@ def create_account(
     if owner is None:
         raise ApiError(404, "NOT_FOUND", USER_NOT_FOUND)
     if owner.status != "ACTIVE":
-        raise ApiError(400, "USER_NOT_ACTIVE", "وضعیت کاربر صاحب حساب باید ACTIVE باشد")
+        raise ApiError(400, "USER_NOT_ACTIVE", "The owner of the account must be an ACTIVE user")
 
     accounts_of_owner = db.scalar(select(func.count()).select_from(Account).where(Account.user_id == owner_id))
     if accounts_of_owner >= MAX_ACCOUNTS_PER_USER:
-        raise ApiError(409, "CONFLICT", f"هر کاربر حداکثر {MAX_ACCOUNTS_PER_USER} حساب می‌تواند داشته باشد")
+        raise ApiError(409, "CONFLICT", f"A user can have at most {MAX_ACCOUNTS_PER_USER} accounts")
 
     for _ in range(5):  # a Sheba collision is practically impossible, but the database would refuse it
         account = Account(user_id=owner_id, sheba_number=generate_sheba(), account_type=body.account_type)
@@ -82,4 +81,4 @@ def create_account(
                 )
             )
         return account
-    raise ApiError(503, "SERVICE_UNAVAILABLE", "ساخت شماره شبا ممکن نشد؛ دوباره تلاش کنید")
+    raise ApiError(503, "SERVICE_UNAVAILABLE", "Could not generate a Sheba number; try again")

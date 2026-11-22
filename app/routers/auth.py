@@ -22,11 +22,11 @@ router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 MAX_FAILED_ATTEMPTS = int(os.getenv("MAX_FAILED_LOGIN_ATTEMPTS", "5"))
 LOCK_MINUTES = int(os.getenv("LOGIN_LOCK_MINUTES", "15"))
 
-INVALID_CREDENTIALS = "کد ملی یا رمز عبور اشتباه است"
-LOCKED_MESSAGE = "به دلیل تلاش‌های ناموفق زیاد، ورود موقتاً مسدود شده است؛ بعداً دوباره تلاش کنید"
+INVALID_CREDENTIALS = "National code or password is wrong"
+LOCKED_MESSAGE = "Too many failed attempts; login is locked for a while, try again later"
 INACTIVE_MESSAGES = {
-    "BLOCKED": "حساب کاربری مسدود شده است",
-    "INACTIVE": "حساب کاربری غیرفعال است",
+    "BLOCKED": "Account is blocked",
+    "INACTIVE": "Account is inactive",
 }
 DUMMY_HASH = hash_password("dummy-password-for-timing")
 
@@ -85,7 +85,7 @@ def login(body: LoginRequest, db: Session = Depends(get_db)):
 
     # 4) only ACTIVE users get a token
     if user.status != "ACTIVE":
-        raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "حساب کاربری فعال نیست"))
+        raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "Account is not active"))
 
     return build_tokens(user)
 
@@ -96,15 +96,15 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
     try:
         payload = decode_token(body.refresh_token, "refresh")
     except jwt.InvalidTokenError:
-        raise ApiError(401, "UNAUTHORIZED", "توکن نامعتبر یا منقضی شده است")
+        raise ApiError(401, "UNAUTHORIZED", "Token is invalid or expired")
 
     user = db.get(User, payload["sub"])
     if user is None:
-        raise ApiError(401, "UNAUTHORIZED", "توکن نامعتبر است")
+        raise ApiError(401, "UNAUTHORIZED", "Token is invalid")
     if payload.get("ver", 0) != user.token_version:  # revoked: the user was blocked/deactivated after login
-        raise ApiError(401, "UNAUTHORIZED", "توکن باطل شده است؛ دوباره وارد شوید")
+        raise ApiError(401, "UNAUTHORIZED", "Token was revoked; log in again")
     if user.status != "ACTIVE":  # blocked/inactive users can not extend their session
-        raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "حساب کاربری فعال نیست"))
+        raise ApiError(403, "FORBIDDEN", INACTIVE_MESSAGES.get(user.status, "Account is not active"))
     return build_tokens(user)
 
 

@@ -23,6 +23,7 @@ def test_verify_password_with_missing_or_broken_hash():
     assert not verify_password("Str0ng-pass1", "not-a-bcrypt-hash")
 
 
-def test_persian_password():
-    hashed = hash_password("رمز-عبور-قوی-۱۲۳")
-    assert verify_password("رمز-عبور-قوی-۱۲۳", hashed)
+def test_non_ascii_password():
+    password = "p\u00e4ssw\u00f6rd-\u20ac-123"  # umlauts and a euro sign: more than one byte per character
+    hashed = hash_password(password)
+    assert verify_password(password, hashed)
