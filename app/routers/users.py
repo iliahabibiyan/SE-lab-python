@@ -20,8 +20,7 @@ from app.validators import is_valid_national_code, normalize_digits
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 logger = logging.getLogger("labbank")
 
-DUPLICATE_NATIONAL_CODE = "کد ملی تکراری است"
-
+DUPLICATE_NATIONAL_CODE = "National code already exists"
 
 @router.post("", response_model=UserResponse, status_code=201)
 def register_user(body: UserCreate, db: Session = Depends(get_db)):
@@ -59,7 +58,7 @@ def search_users(
                 400,
                 "VALIDATION_ERROR",
                 "Invalid or incomplete input",
-                extra={"errors": [{"field": "national_code", "message": "کد ملی نامعتبر است"}]},
+                extra={"errors": [{"field": "national_code", "message": "National code is not valid"}]},
             )
         query = query.where(User.national_code == code)
     if cursor:
@@ -74,8 +73,7 @@ def search_users(
     return UserListResponse(items=items, next_cursor=next_cursor)
 
 
-USER_NOT_FOUND = "کاربری با این شناسه یافت نشد"
-
+USER_NOT_FOUND = "User not found"
 
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(
@@ -138,7 +136,7 @@ def update_user_status(
     """US5: change the status of a user (ACTIVE, INACTIVE or BLOCKED). The accounts of the user are not touched."""
     key = str(user_id)
     if key == current_user.id:  # rule: nobody changes his own status (a manager must not lock himself out)
-        raise ApiError(409, "CONFLICT", "نمی‌توانید وضعیت خودتان را تغییر دهید")
+        raise ApiError(409, "CONFLICT", "You can not change your own status")
 
     user = db.get(User, key)
     if user is None:

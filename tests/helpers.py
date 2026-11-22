@@ -11,10 +11,10 @@ OTHER_NATIONAL_CODE = "0499370899"
 def valid_payload(**overrides) -> dict:
     payload = {
         "national_code": NATIONAL_CODE,
-        "name": "علی رضایی",
+        "name": "Ali Rezaei",
         "birth_date": "1995-03-21",
         "phone_number": "09123456789",
-        "address": "تهران، خیابان آزادی، پلاک ۱۰",
+        "address": "Tehran, Azadi St., No. 10",
         "postal_code": "1593656789",
         "password": PASSWORD,
     }
@@ -66,3 +66,13 @@ def token_for(client, national_code=NATIONAL_CODE) -> str:
 
 def make_admin(national_code=NATIONAL_CODE) -> None:
     update_user(national_code, role="ADMIN")
+
+
+def to_persian_digits(text: str) -> str:
+    """Replace the English digits of `text` with Persian digits (built from code points)."""
+    return "".join(chr(0x06F0 + int(c)) if c in "0123456789" else c for c in text)
+
+
+def to_arabic_digits(text: str) -> str:
+    """Replace the English digits of `text` with Arabic-Indic digits (built from code points)."""
+    return "".join(chr(0x0660 + int(c)) if c in "0123456789" else c for c in text)

@@ -1,4 +1,4 @@
-from tests.helpers import NATIONAL_CODE, auth_header, login, register_user
+from tests.helpers import NATIONAL_CODE, auth_header, login, register_user, to_persian_digits
 
 URL = "/api/v1/users"
 
@@ -19,7 +19,7 @@ def test_search_by_national_code(client):
 
 def test_search_accepts_persian_digits(client):
     user, token = register_and_get_token(client)
-    response = client.get(URL, params={"national_code": "۰۰۱۳۵۴۲۴۱۹"}, headers=auth_header(token))
+    response = client.get(URL, params={"national_code": to_persian_digits(NATIONAL_CODE)}, headers=auth_header(token))
     assert [item["id"] for item in response.json()["items"]] == [user["id"]]
 
 

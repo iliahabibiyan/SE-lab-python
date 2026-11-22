@@ -2,10 +2,11 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas import UserUpdate
+from tests.helpers import to_persian_digits
 
 VALID = {
     "phone_number": "09129998877",
-    "address": "تهران، خیابان انقلاب، پلاک ۵",
+    "address": "Tehran, Enghelab St., No. 5",
     "postal_code": "1946813561",
 }
 
@@ -19,11 +20,11 @@ def test_valid_update():
 def test_values_are_normalized():
     update = UserUpdate(
         phone_number="+98 912 999 8877",
-        address="  تهران،   خیابان انقلاب   ",
-        postal_code="۱۹۴۶۸۱۳۵۶۱",
+        address="  Tehran,   Enghelab St.   ",
+        postal_code=to_persian_digits("1946813561"),
     )
     assert update.phone_number == "09129998877"
-    assert update.address == "تهران، خیابان انقلاب"
+    assert update.address == "Tehran, Enghelab St."
     assert update.postal_code == "1946813561"
 
 

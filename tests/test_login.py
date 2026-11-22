@@ -1,5 +1,5 @@
 from app.tokens import ACCESS_TOKEN_MINUTES, decode_token
-from tests.helpers import NATIONAL_CODE, login, register_user, update_user
+from tests.helpers import NATIONAL_CODE, login, register_user, to_persian_digits, update_user
 
 URL = "/api/v1/auth/login"
 
@@ -16,7 +16,7 @@ def test_login_success_returns_jwt(client):
 
 def test_login_accepts_persian_digits_in_national_code(client):
     register_user(client)
-    assert login(client, national_code="۰۰۱۳۵۴۲۴۱۹").status_code == 200
+    assert login(client, national_code=to_persian_digits(NATIONAL_CODE)).status_code == 200
 
 
 def test_login_wrong_password(client):

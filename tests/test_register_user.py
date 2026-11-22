@@ -16,7 +16,7 @@ def test_register_success(client):
     uuid.UUID(body["id"])  # id is a valid UUID
     assert body["status"] == "ACTIVE"
     assert body["national_code"] == "0013542419"
-    assert body["name"] == "علی رضایی"
+    assert body["name"] == "Ali Rezaei"
     assert body["birth_date"] == "1995-03-21"
     assert body["phone_number"] == "09123456789"
     assert body["postal_code"] == "1593656789"
@@ -25,12 +25,12 @@ def test_register_success(client):
 
 def test_register_duplicate_national_code(client):
     assert client.post(URL, json=valid_payload()).status_code == 201
-    response = client.post(URL, json=valid_payload(name="کس دیگر"))
+    response = client.post(URL, json=valid_payload(name="Someone Else"))
     assert response.status_code == 409
     assert response.headers["content-type"].startswith("application/problem+json")
     body = response.json()
     assert body["code"] == "CONFLICT"
-    assert body["detail"] == "کد ملی تکراری است"
+    assert body["detail"] == "National code already exists"
 
 
 def test_register_missing_fields(client):
@@ -91,7 +91,7 @@ def test_register_requires_password(client):
 
 
 def test_register_rejects_too_long_password(client):
-    for password in ["a" * 73, "ا" * 37]:  # 73 bytes and 74 bytes
+    for password in ["a" * 73, "\u0627" * 37]:  # 73 bytes, and 74 bytes (a Persian letter takes 2 bytes)
         response = client.post(URL, json=valid_payload(password=password))
         assert response.status_code == 400, password
         assert response.json()["errors"][0]["field"] == "password"
