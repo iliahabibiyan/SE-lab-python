@@ -1,23 +1,25 @@
 import json
 import logging
 import os
-from sqlalchemy import func, select         
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Request
-from sqlalchemy.orm import Session
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
-from app.dependencies import get_current_user
-from app.iban import generate_sheba
-from app.permissions import ensure_can_open_account
+from sqlalchemy.orm import Session
+
 from app.clients.s2_client import S2Client, S2Unavailable, get_s2_client
 from app.database import get_db
+from app.dependencies import get_current_user
 from app.errors import ApiError
+from app.iban import generate_sheba
 from app.models import Account, User
+from app.permissions import ensure_can_open_account
 from app.schemas import AccountCreate, AccountResponse
 
 router = APIRouter(prefix="/api/v1/accounts", tags=["accounts"])
 logger = logging.getLogger("labbank")
+
 MAX_ACCOUNTS_PER_USER = int(os.getenv("MAX_ACCOUNTS_PER_USER", "5"))
 
 ACCOUNT_NOT_FOUND = "Account not found"
