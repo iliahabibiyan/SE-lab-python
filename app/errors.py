@@ -1,7 +1,12 @@
+import json
+import logging
+
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+logger = logging.getLogger("labbank")
 
 # Base error codes from the project document (section 3.1)
 DEFAULT_CODES = {
@@ -11,6 +16,7 @@ DEFAULT_CODES = {
     404: "NOT_FOUND",
     409: "CONFLICT",
     429: "TOO_MANY_REQUESTS",
+    500: "INTERNAL_ERROR",
     503: "SERVICE_UNAVAILABLE",
     504: "UPSTREAM_TIMEOUT",
 }
@@ -72,3 +78,20 @@ def register_error_handlers(app: FastAPI) -> None:
     async def handle_http_error(request: Request, exc: StarletteHTTPException):
         code = DEFAULT_CODES.get(exc.status_code, "ERROR")
         return problem_response(request, exc.status_code, code, str(exc.detail), str(exc.detail))
+
+    @app.exception_handler(Exception)
+    async def handle_unexpected_error(request: Request, exc: Exception):
+        # The message of the exception is neither returned nor logged: it may contain SQL parameters or other secrets.
+        logger.error(
+            json.dumps(
+                {
+                    "level": "ERROR",
+                    "service": "S1-ACC",
+                    "event": "unhandled_exception",
+                    "error_type": type(exc).__name__,
+                    "correlation_id": getattr(request.state, "correlation_id", None),
+                    "path": request.url.path,
+                }
+            )
+        )
+        return problem_response(request, 500, "INTERNAL_ERROR", "Internal error", "An unexpected error occurred")

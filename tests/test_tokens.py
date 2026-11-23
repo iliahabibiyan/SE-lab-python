@@ -3,7 +3,7 @@ from datetime import timedelta
 import jwt
 import pytest
 
-from app.tokens import _create_token, create_access_token, decode_token
+from app.tokens import _create_token, create_access_token, decode_token, get_secret
 
 USER_ID = "0192a7e4-6b1d-7c3e-9a41-2f5d8e0b7c11"
 
@@ -45,3 +45,10 @@ def test_wrong_token_type_is_rejected():
 def test_garbage_is_rejected():
     with pytest.raises(jwt.InvalidTokenError):
         decode_token("not-a-jwt")
+
+
+def test_empty_short_and_example_secrets_are_refused(monkeypatch):
+    for bad_secret in ("", "short", "change-me-to-a-long-random-string"):
+        monkeypatch.setenv("JWT_SECRET", bad_secret)
+        with pytest.raises(RuntimeError):
+            get_secret()
