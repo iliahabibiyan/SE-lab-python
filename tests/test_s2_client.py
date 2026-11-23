@@ -49,3 +49,10 @@ def test_timeout_and_connection_errors_are_reported_as_unavailable():
 def test_missing_base_url_is_reported_as_unavailable():
     with pytest.raises(S2Unavailable):
         HttpS2Client(None).account_created(ACCOUNT_ID)
+
+
+@respx.mock
+def test_any_unexpected_client_error_is_reported_as_unavailable():
+    respx.post(URL).mock(side_effect=RuntimeError("boom"))
+    with pytest.raises(S2Unavailable):
+        HttpS2Client(BASE).account_created(ACCOUNT_ID)

@@ -31,8 +31,8 @@ class HttpS2Client:
             response = httpx.post(
                 f"{self.base_url}/api/v1/accounts", json={"account_id": account_id}, headers=headers, timeout=self.timeout
             )
-        except httpx.HTTPError as error:  # timeout, connection refused, ...
-            raise S2Unavailable(str(error)) from error
+        except Exception as error:  # timeout, refused connection, bad URL, ...: S2 is never vital for opening an account
+            raise S2Unavailable(f"{type(error).__name__}: {error}") from error
         if response.status_code not in (200, 201, 204):
             raise S2Unavailable(f"S2 answered {response.status_code}")
 
