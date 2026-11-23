@@ -1,12 +1,14 @@
 import json
 import logging
+import os
 from datetime import datetime, timezone
 
 from fastapi import Request
 
 from app.utils import new_id
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
+LOG_LEVEL = logging.getLevelNamesMapping().get(os.getenv("LOG_LEVEL", "INFO").upper(), logging.INFO)
+logging.basicConfig(level=LOG_LEVEL, format="%(message)s")
 logger = logging.getLogger("labbank")
 
 
