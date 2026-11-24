@@ -38,5 +38,13 @@ services:
       db:
         condition: service_healthy
 
+    frontend:
+      build: ./frontend
+      ports:
+        - "${FRONTEND_PORT:-8080}:80"
+      depends_on:
+        s1:
+          condition: service_healthy
+
 volumes:
   s1_pgdata:

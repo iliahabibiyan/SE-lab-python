@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
 
-const API_URL: string = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8081";
-
 type Health = { status: string };
 
 export default function App() {
@@ -9,7 +7,7 @@ export default function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_URL}/health`)
+    fetch("/health") // same origin: the Vite dev server and nginx both forward it to the service
       .then((res) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
