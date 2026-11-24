@@ -12,3 +12,10 @@ target
 .env.*
 README.md
 scripts
+frontend
+tests
+tests-api
+docs
+openapi
+pytest.ini
+requirements-dev.txt

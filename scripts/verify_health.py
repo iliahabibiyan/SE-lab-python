@@ -8,7 +8,7 @@ import urllib.request
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("base_url", nargs="?", default="http://127.0.0.1:8080")
+    parser.add_argument("base_url", nargs="?", default="http://127.0.0.1:8081")
     args = parser.parse_args()
     base = args.base_url.rstrip("/")
     # Ignore environment proxy settings for this local verification.
