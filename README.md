@@ -1,154 +1,76 @@
-# Python Starter Service
+# S1 - Customer & Account Management (LabBank)
 
-A minimal, independent starter repository for Session 01 of the Software Engineering Lab.
-The task is to run the same health endpoint on every team member's computer.
-No database, authentication, or external service is required.
+Service S1 (ACC1-S) of the LabBank project: customers, login with JWT, user profiles and bank accounts with Sheba numbers.
+Python 3.12, FastAPI, PostgreSQL. The API contract is `openapi/account.yaml`.
 
-## Requirements
+## Quick start (Docker)
+```bash
+cp .env.example .env
+python -c "import secrets; print(secrets.token_urlsafe(48))"   # put the result in .env as JWT_SECRET
+docker compose up --build
+```
 
-- Python 3.12.x and pip. Direct dependencies are pinned; transitive dependencies are resolved by pip.
-- Git to clone and push the repository.
-- Internet access for the first dependency download.
-- Docker is optional for running this service; use it only if you choose the Docker route below.
-
-## API contract
-
-| Item | Value |
+| What | URL |
 | --- | --- |
-| Method | `GET` |
-| Path | `/health` |
-| HTTP status | `200 OK` |
-| Content type | `application/json` (an optional charset is allowed) |
-| JSON body | `{"status":"ok"}` |
-| Local URL | `http://127.0.0.1:8080/health` |
+| Service (API) | http://localhost:8081 |
+| Swagger UI | http://localhost:8081/docs |
+| Frontend (nginx) | http://localhost:8080 |
+| PostgreSQL (from your machine only) | 127.0.0.1:5432 |
 
-JSON whitespace is insignificant. Header order and framework-specific headers may differ
-between languages. Error body formats are not part of the shared contract.
-`POST /health` returns 405; an unknown route returns 404.
-This endpoint checks that the application is responding, not the health of future dependencies.
+`docker compose down` keeps the data (volume `s1_pgdata`). `docker compose down -v` deletes it.
 
-## Run locally
+## Demo data
+With `SEED_DATA=1` (the Compose default) the service creates this data at start; running it again does nothing new.
 
-Open a terminal in this repository's root, then run:
+| Kind | National code / id | Notes |
+| --- | --- | --- |
+| User | `3740681241` | password `Str0ng-pass1` |
+| User | `6907366258` | password `Str0ng-pass1` |
+| ACTIVE account | `0192a7e4-6b1d-7c3e-9a41-2f5d8e0b7c11` | Sheba `IR740990000000000000000001` |
+| BLOCKED account | `0192a7e5-1c2d-7a90-8b33-4d6e9f0a1b22` | Sheba `IR470990000000000000000002` |
 
-```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -r requirements.txt
-.\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8080
-```
-
-Keep that terminal open. Stop the server with `Ctrl+C`.
-
-On macOS or Linux:
-
+Roles (`USER`, `ADMIN`, `MANAGER`, `OFFICER`) are set in the database, for example:
 ```bash
-python3.12 -m venv .venv
-.venv/bin/python -m pip install -r requirements.txt
-.venv/bin/python -m uvicorn main:app --host 127.0.0.1 --port 8080
+docker compose exec db psql -U labbank -d s1_accounts -c "update users set role = 'ADMIN' where national_code = '3740681241';"
 ```
 
-Use `python3` instead of `python3.12` if it already points to Python 3.12.
-Calling the virtual environment's Python directly avoids activation and PowerShell execution-policy issues.
-Do not commit `.venv`. API documentation routes are disabled to keep this starter focused.
-
-## Check the service
-
-In a second terminal on Windows PowerShell:
-
-```powershell
-curl.exe -i http://127.0.0.1:8080/health
-```
-
-On macOS or Linux:
-
+## Run without Docker
 ```bash
-curl -i http://127.0.0.1:8080/health
+docker compose up -d db
+python -m venv .venv && . .venv/bin/activate        # Windows: .venv\Scripts\activate
+pip install -r requirements-dev.txt
+JWT_SECRET=<a-random-value-of-16-or-more-characters> python -m uvicorn main:app --port 8081
 ```
+The default `DATABASE_URL` matches `.env.example`.
 
-Expect HTTP 200, JSON content type, and `{"status":"ok"}`.
-You can also open the URL in your browser.
-
-For an optional automated contract check, install Python 3.10+ and run:
-
+## Frontend
 ```bash
-python scripts/verify_health.py
+cd frontend
+npm install
+npm run dev        # http://localhost:5173, forwards /api, /health and /ready to port 8081
+npm run gen:api    # regenerate src/api/schema.d.ts after the contract changed
 ```
 
-On Windows, use `py scripts/verify_health.py` if `python` is not available;
-on macOS/Linux use `python3`. No extra Python packages are needed for this check.
-The server must already be running. The script checks GET, the rejected POST method,
-and an unknown route. It exits with a nonzero status on failure.
-
-## Run with Docker
-
-From the repository root:
-
+## Tests
 ```bash
-docker build -t starter-python .
-docker run --rm -p 127.0.0.1:8080:8080 starter-python
+pip install -r requirements-dev.txt
+pytest                                                      # all tests
+pytest tests/test_login.py::test_login_success_returns_jwt -v   # one test
 ```
+The tests use a temporary SQLite database, so PostgreSQL is not needed.
+API requests for Bruno are in `tests-api/` (open the folder in Bruno, choose the `local` environment, Run Collection).
 
-The container listens on all container interfaces; the published port is restricted to
-localhost on your machine. Stop the foreground container with `Ctrl+C`.
-The Docker image is for a teaching starter; registry tags receive updates and are not digest-pinned.
-
-## Port conflicts
-
-Run only one starter on port 8080 at a time. Stop the previous server first.
-To use port 8081 with Docker, change the mapping to `127.0.0.1:8081:8080`.
-Then check `http://127.0.0.1:8081/health`.
-
-Local port override (PowerShell):
-
-```powershell
-.\.venv\Scripts\python.exe -m uvicorn main:app --host 127.0.0.1 --port 8081
-```
-
-## Files to know
-
-- `main.py`: health endpoint implementation.
-- `Dockerfile`: optional container build and startup.
-- `.gitignore`: excludes generated files and local settings.
-- `scripts/verify_health.py`: optional black-box API verification.
-
-## Publish this starter as a new repository
-
-Create an **empty** GitHub repository named `starter-python`. Do not initialize it with a README,
-license, or gitignore. From this extracted folder (which has no Git history), run:
-
-```bash
-git init -b main
-git add .
-git commit -m "Add minimal health service starter"
-git remote add origin https://github.com/YOUR_ORG/starter-python.git
-git push -u origin main
-```
-
-Replace `YOUR_ORG` with your GitHub organization or account. Configure your own Git name
-and email first. These commands are for a new repository, not an existing working copy.
-After publishing, the repository can optionally be marked as a template in GitHub settings.
-
-## Session 01 completion checklist
-
-- [ ] Three team members and the chosen language are registered.
-- [ ] The unchanged starter code has been pushed to the team's `main` branch.
-- [ ] Every member can clone the team repository.
-- [ ] Every member gets the successful `/health` response locally.
-- [ ] The report includes the team repository URL and evidence of each member's successful run.
-
-## Troubleshooting
-
-- **Connection refused:** start the service and check its terminal output and port.
-- **Address already in use:** stop the other service or use the override above.
-- **404 on `/`:** expected; request `/health` instead.
-- **Dependency download failed:** check network/proxy access to the package registry.
-- **Command not found:** install the SDK/tool listed above and reopen the terminal.
-
-## Official reference
-
-[Python web service documentation](https://fastapi.tiangolo.com/tutorial/first-steps/)
-
-## Members
-- **Ilia Habibiyan Fard**
-- **Mohammadreza Razavian**
-- **Masih Mahdavi Nia**
+## Configuration
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `DATABASE_URL` | local PostgreSQL | database connection |
+| `JWT_SECRET` | none (required) | signing key, at least 16 characters |
+| `ACCESS_TOKEN_MINUTES` / `REFRESH_TOKEN_DAYS` | 15 / 7 | token lifetimes |
+| `MAX_FAILED_LOGIN_ATTEMPTS` / `LOGIN_LOCK_MINUTES` | 5 / 15 | login lock |
+| `MAX_ACCOUNTS_PER_USER` | 5 | accounts one user may have |
+| `BCRYPT_ROUNDS` | 12 | password hashing cost |
+| `CORS_ORIGINS` | the Vite dev server | allowed browser origins |
+| `SEED_DATA` | 1 in Compose | create the demo data |
+| `S2_BASE_URL` | empty | address of S2; empty means S2 is not told about new accounts |
+| `LOG_LEVEL` | INFO | log level |
+| `S1_PORT`, `FRONTEND_PORT`, `DB_HOST_PORT` | 8081, 8080, 5432 | published ports (Compose only) |
