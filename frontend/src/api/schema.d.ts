@@ -315,7 +315,7 @@ export interface components {
             address: string;
             postal_code: string;
             /** @enum {string} */
-            role: "USER" | "ADMIN";
+            role: "USER" | "ADMIN" | "MANAGER" | "OFFICER";
         };
         UserCreate: {
             /** @description Valid Iranian national code (check digit); unique. */
