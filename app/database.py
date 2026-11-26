@@ -1,7 +1,7 @@
 import os
 from pathlib import Path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import Engine, create_engine, text
 from sqlalchemy.orm import DeclarativeBase, sessionmaker
 
 DATABASE_URL = os.getenv(
@@ -27,9 +27,9 @@ def get_db():
         db.close()
 
 
-def run_migrations() -> None:
-    """Run every migrations/*.sql file (sorted by name) that has not been applied yet."""
-    with engine.begin() as conn:
+def run_migrations(target: Engine | None = None) -> None:
+    """Run every migrations/*.sql file (sorted by name) that has not been applied yet (on `target`, default: the app database)."""
+    with (target or engine).begin() as conn:
         conn.execute(text("CREATE TABLE IF NOT EXISTS schema_migrations (filename VARCHAR(255) PRIMARY KEY)"))
         done = {row[0] for row in conn.execute(text("SELECT filename FROM schema_migrations"))}
         for path in sorted(MIGRATIONS_DIR.glob("*.sql")):
