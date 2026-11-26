@@ -673,7 +673,7 @@ components:
           pattern: '^[0-9]{10}$'
         role:
           type: string
-          enum: [USER, ADMIN]
+          enum: [USER, ADMIN, MANAGER, OFFICER]
       examples:
         - id: 0192a7e4-0000-7000-8000-000000000001
           national_code: '0013542419'
