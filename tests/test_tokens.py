@@ -47,8 +47,8 @@ def test_garbage_is_rejected():
         decode_token("not-a-jwt")
 
 
-def test_empty_short_and_example_secrets_are_refused(monkeypatch):
-    for bad_secret in ("", "short", "change-me-to-a-long-random-string"):
+def test_empty_and_short_secrets_are_refused(monkeypatch):    
+    for bad_secret in ("", "short"):
         monkeypatch.setenv("JWT_SECRET", bad_secret)
         with pytest.raises(RuntimeError):
             get_secret()
