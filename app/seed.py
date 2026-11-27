@@ -2,10 +2,12 @@
 
 import json
 import logging
+import os
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
 
+from app.clients.s2_client import S2Unavailable, get_s2_client
 from app.database import SessionLocal
 from app.models import Account, User
 from app.security import hash_password
@@ -65,3 +67,15 @@ def seed_demo_data() -> None:
             db.commit()
     except IntegrityError as error:  # e.g. somebody already registered one of the demo national codes
         logger.warning(json.dumps({"level": "WARNING", "service": "S1-ACC", "event": "seed_failed", "error": str(error.orig)}))
+    tell_s2_about_the_demo_accounts()
+
+def tell_s2_about_the_demo_accounts() -> None:
+    """S2 asks S1 about an account before it posts entries, so it must know the demo accounts. Repeating it is harmless."""
+    if not os.getenv("S2_BASE_URL"):
+        return  # S2 is not configured (for example when S1 runs alone)
+    client = get_s2_client()
+    for data in ACCOUNTS:
+        try:
+            client.account_created(data["id"])
+        except S2Unavailable as error:  # S2 may start later; S1 must start anyway
+            logger.warning(json.dumps({"level": "WARNING", "service": "S1-ACC", "event": "s2_unavailable", "account_id": data["id"], "error": str(error)}))
