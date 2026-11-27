@@ -1,4 +1,5 @@
 """Check a running service using only the Python standard library."""
+
 import argparse
 import json
 import sys
