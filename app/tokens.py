@@ -10,8 +10,8 @@ REFRESH_TOKEN_DAYS = int(os.getenv("REFRESH_TOKEN_DAYS", "7"))
 
 def get_secret() -> str:
     secret = os.getenv("JWT_SECRET", "")
-    if len(secret) < 16 or secret.startswith("change-me"):
-        raise RuntimeError("JWT_SECRET is not set (use a random value of at least 16 characters, not the example)")
+    if len(secret) < 16:
+        raise RuntimeError("JWT_SECRET is not set (it must have at least 16 characters)")
     return secret
 
 

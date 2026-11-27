@@ -17,6 +17,8 @@ docker compose up --build
 | Frontend (nginx) | http://localhost:8080 |
 | PostgreSQL (from your machine only) | 127.0.0.1:5432 |
 
+`compose.yaml` also starts a stub of S2 (Prism, made from `docs/s2-account-created.openapi.yaml`), so S1 runs alone; `.env.example` has a development-only `JWT_SECRET`, so `cp .env.example .env` is enough. Use your own random secret outside development.
+
 `docker compose down` keeps the data (volume `s1_pgdata`). `docker compose down -v` deletes it.
 
 ## Demo data
@@ -72,13 +74,13 @@ API requests for Bruno are in `tests-api/` (open the folder in Bruno, choose the
 | Variable | Default | Meaning |
 | --- | --- | --- |
 | `DATABASE_URL` | local PostgreSQL | database connection |
-| `JWT_SECRET` | none (required) | signing key, at least 16 characters |
+| `JWT_SECRET` | dev value in `.env.example` | signing key, at least 16 characters (use your own outside development) |
 | `ACCESS_TOKEN_MINUTES` / `REFRESH_TOKEN_DAYS` | 15 / 7 | token lifetimes |
 | `MAX_FAILED_LOGIN_ATTEMPTS` / `LOGIN_LOCK_MINUTES` | 5 / 15 | login lock |
 | `MAX_ACCOUNTS_PER_USER` | 5 | accounts one user may have |
 | `BCRYPT_ROUNDS` | 12 | password hashing cost |
 | `CORS_ORIGINS` | the Vite dev server | allowed browser origins |
 | `SEED_DATA` | 1 in Compose | create the demo data |
-| `S2_BASE_URL` | empty | address of S2; empty means S2 is not told about new accounts |
+| `S2_BASE_URL` | `http://s2:8082` (the stub) in Compose | address of S2; empty means S2 is not told about new accounts |
 | `LOG_LEVEL` | INFO | log level |
 | `S1_PORT`, `FRONTEND_PORT`, `DB_HOST_PORT` | 8081, 8080, 5432 | published ports (Compose only) |
