@@ -70,11 +70,10 @@ def seed_demo_data() -> None:
             db.commit()
     except IntegrityError as error:  # e.g. somebody already registered one of the demo national codes
         logger.warning(
-            json.dumps(
-                {"level": "WARNING", "service": "S1-ACC", "event": "seed_failed", "error": str(error.orig)}
-            )
+            json.dumps({"level": "WARNING", "service": "S1-ACC", "event": "seed_failed", "error": str(error.orig)})
         )
     tell_s2_about_the_demo_accounts()
+
 
 def tell_s2_about_the_demo_accounts() -> None:
     """Tell S2 about demo accounts before it posts entries; repeating this call is harmless."""

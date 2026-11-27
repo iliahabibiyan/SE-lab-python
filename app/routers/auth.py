@@ -41,9 +41,7 @@ def build_tokens(user: User) -> TokenResponse:
 
 def register_failed_attempt(db: Session, user: User, now: datetime) -> None:
     """Count one wrong password; lock the account when the limit is reached."""
-    db.execute(
-        update(User).where(User.id == user.id).values(failed_login_attempts=User.failed_login_attempts + 1)
-    )
+    db.execute(update(User).where(User.id == user.id).values(failed_login_attempts=User.failed_login_attempts + 1))
     db.commit()
     db.refresh(user)
     if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:

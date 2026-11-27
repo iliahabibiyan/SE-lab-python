@@ -21,6 +21,7 @@ logger = logging.getLogger("labbank")
 
 DUPLICATE_NATIONAL_CODE = "National code already exists"
 
+
 @router.post("", response_model=UserResponse, status_code=201)
 def register_user(body: UserCreate, db: Session = Depends(get_db)):
     """US1: register a new user. Status is ACTIVE by default."""
@@ -73,6 +74,7 @@ def search_users(
 
 
 USER_NOT_FOUND = "User not found"
+
 
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(

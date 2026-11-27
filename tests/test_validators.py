@@ -10,8 +10,8 @@ def test_national_code_invalid():
     bad = [
         "0013542418",  # wrong check digit
         "1111111111",  # all digits equal
-        "12345",       # too short
-        "00135424190", # too long
+        "12345",  # too short
+        "00135424190",  # too long
         "00135424a9",  # not only digits
         "",
     ]

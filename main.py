@@ -18,7 +18,7 @@ from app.tokens import get_secret
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    get_secret()  
+    get_secret()
     run_migrations()
     if os.getenv("SEED_DATA") == "1":  # demo data (docker-compose turns it on)
         seed_demo_data()

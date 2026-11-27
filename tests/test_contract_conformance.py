@@ -27,7 +27,7 @@ def test_every_implemented_endpoint_is_in_the_contract():
     for route in app.routes:
         if not isinstance(route, APIRoute) or not route.path.startswith(API):
             continue  # /health, /ready and the documentation pages are not part of the contract
-        path = route.path[len(API):]
+        path = route.path[len(API) :]
         for method in route.methods - {"HEAD", "OPTIONS"}:
             if method.lower() not in CONTRACT["paths"].get(path, {}):
                 missing.append(f"{method} {route.path}")

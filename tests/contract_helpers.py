@@ -35,9 +35,9 @@ def assert_matches_contract(response, operation_id: str, status: int | None = No
         assert response.status_code == status, response.text
     responses = operation(operation_id)["responses"]
     declared = responses.get(str(response.status_code))
-    assert declared is not None, (
-        f"{operation_id}: status {response.status_code} is not in the contract {sorted(responses)}"
-    )
+    assert (
+        declared is not None
+    ), f"{operation_id}: status {response.status_code} is not in the contract {sorted(responses)}"
     content = resolve(declared).get("content", {})
     if not content:
         assert not response.content, f"{operation_id}: the contract says there is no body"
