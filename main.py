@@ -25,7 +25,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="S1 - Customer & Account Management", redirect_slashes=False, lifespan=lifespan)
+app = FastAPI(title="S1 - Customer & Account Management", version="0.8.0", redirect_slashes=False, lifespan=lifespan)
 app.middleware("http")(correlation_middleware)
 app.add_middleware(
     CORSMiddleware,
