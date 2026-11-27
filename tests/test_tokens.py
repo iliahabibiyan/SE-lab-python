@@ -30,7 +30,11 @@ def test_tampered_token_is_rejected():
 
 
 def test_token_signed_with_another_key_is_rejected():
-    forged = jwt.encode({"sub": USER_ID, "type": "access", "exp": 9999999999}, "another-secret-key-0123456789-abcdef", algorithm="HS256")
+    forged = jwt.encode(
+        {"sub": USER_ID, "type": "access", "exp": 9999999999},
+        "another-secret-key-0123456789-abcdef",
+        algorithm="HS256",
+    )
     with pytest.raises(jwt.InvalidTokenError):
         decode_token(forged)
 

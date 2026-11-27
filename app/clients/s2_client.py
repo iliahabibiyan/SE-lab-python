@@ -29,9 +29,13 @@ class HttpS2Client:
             headers["X-Correlation-ID"] = correlation_id
         try:
             response = httpx.post(
-                f"{self.base_url}/api/v1/accounts", json={"account_id": account_id}, headers=headers, timeout=self.timeout
+                f"{self.base_url}/api/v1/accounts",
+                json={"account_id": account_id},
+                headers=headers,
+                timeout=self.timeout,
             )
-        except Exception as error:  # timeout, refused connection, bad URL, ...: S2 is never vital for opening an account
+        except Exception as error:
+            # S2 is never vital for opening an account (timeout, refused connection, bad URL, ...)
             raise S2Unavailable(f"{type(error).__name__}: {error}") from error
         if response.status_code not in (200, 201, 204):
             raise S2Unavailable(f"S2 answered {response.status_code}")

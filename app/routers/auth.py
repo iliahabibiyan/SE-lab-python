@@ -96,7 +96,7 @@ def refresh(body: RefreshRequest, db: Session = Depends(get_db)):
     try:
         payload = decode_token(body.refresh_token, "refresh")
     except jwt.InvalidTokenError:
-        raise ApiError(401, "UNAUTHORIZED", "Token is invalid or expired")
+        raise ApiError(401, "UNAUTHORIZED", "Token is invalid or expired") from None
 
     user = db.get(User, payload["sub"])
     if user is None:

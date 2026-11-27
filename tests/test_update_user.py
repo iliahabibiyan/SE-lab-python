@@ -100,7 +100,11 @@ def test_update_can_not_change_other_fields(client):
 
 def test_update_accepts_persian_digits(client):
     me = register_user(client)
-    payload = {**NEW_DATA, "phone_number": to_persian_digits("09129998877"), "postal_code": to_persian_digits("1946813561")}
+    payload = {
+        **NEW_DATA,
+        "phone_number": to_persian_digits("09129998877"),
+        "postal_code": to_persian_digits("1946813561"),
+    }
     response = client.put(f"{URL}/{me['id']}", json=payload, headers=auth_header(token_for(client)))
     assert response.status_code == 200
     assert response.json()["phone_number"] == "09129998877"

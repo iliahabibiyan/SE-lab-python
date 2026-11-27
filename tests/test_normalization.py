@@ -10,7 +10,15 @@ def test_normalize_digits():
 
 
 def test_normalize_phone():
-    for raw in ["09123456789", "+989123456789", "00989123456789", "989123456789", "9123456789", to_persian_digits("09123456789")]:
+    samples = [
+        "09123456789",
+        "+989123456789",
+        "00989123456789",
+        "989123456789",
+        "9123456789",
+        to_persian_digits("09123456789"),
+    ]
+    for raw in samples:
         assert normalize_phone(raw) == "09123456789", raw
 
 

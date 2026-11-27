@@ -34,7 +34,7 @@ def register_user(body: UserCreate, db: Session = Depends(get_db)):
         db.commit()
     except IntegrityError:  # two requests with the same national code at the same time
         db.rollback()
-        raise ApiError(409, "CONFLICT", DUPLICATE_NATIONAL_CODE)
+        raise ApiError(409, "CONFLICT", DUPLICATE_NATIONAL_CODE) from None
     db.refresh(user)
     return user
 

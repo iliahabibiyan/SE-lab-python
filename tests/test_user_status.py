@@ -48,7 +48,11 @@ def staff_and_target(client, role: str = "ADMIN"):
 # ---------- successful changes ----------
 def test_admin_blocks_a_user(client):
     headers, target = staff_and_target(client)
-    response = client.patch(status_url(target["id"]), json={"status": "BLOCKED", "reason": "court order"}, headers=headers)
+    response = client.patch(
+        status_url(target["id"]),
+        json={"status": "BLOCKED", "reason": "court order"},
+        headers=headers,
+    )
     assert response.status_code == 200
     assert response.json()["status"] == "BLOCKED"
     assert response.json()["id"] == target["id"]
@@ -87,7 +91,12 @@ def test_other_users_are_not_touched(client):
 
 def test_reason_is_optional_and_trimmed(client):
     headers, target = staff_and_target(client)
-    for payload in ({"status": "INACTIVE"}, {"status": "ACTIVE", "reason": "   "}, {"status": "INACTIVE", "reason": " ok "}):
+    cases = (
+        {"status": "INACTIVE"},
+        {"status": "ACTIVE", "reason": "   "},
+        {"status": "INACTIVE", "reason": " ok "},
+    )
+    for payload in cases:
         assert client.patch(status_url(target["id"]), json=payload, headers=headers).status_code == 200
 
 
@@ -95,7 +104,11 @@ def test_reason_is_optional_and_trimmed(client):
 def test_normal_user_can_not_change_a_status(client):
     register_user(client)
     target = register_other_user(client)
-    response = client.patch(status_url(target["id"]), json={"status": "BLOCKED"}, headers=auth_header(token_for(client)))
+    response = client.patch(
+        status_url(target["id"]),
+        json={"status": "BLOCKED"},
+        headers=auth_header(token_for(client)),
+    )
     assert response.status_code == 403
     assert response.headers["content-type"].startswith("application/problem+json")
     assert response.json()["code"] == "FORBIDDEN"
@@ -104,14 +117,25 @@ def test_normal_user_can_not_change_a_status(client):
 
 def test_normal_user_gets_403_even_for_an_unknown_id(client):
     register_user(client)
-    response = client.patch(status_url(new_id()), json={"status": "BLOCKED"}, headers=auth_header(token_for(client)))
+    response = client.patch(
+        status_url(new_id()),
+        json={"status": "BLOCKED"},
+        headers=auth_header(token_for(client)),
+    )
     assert response.status_code == 403
 
 
 def test_status_change_requires_login(client):
     target = register_user(client)
     assert client.patch(status_url(target["id"]), json={"status": "BLOCKED"}).status_code == 401
-    assert client.patch(status_url(target["id"]), json={"status": "BLOCKED"}, headers=auth_header("not-a-jwt")).status_code == 401
+    assert (
+        client.patch(
+            status_url(target["id"]),
+            json={"status": "BLOCKED"},
+            headers=auth_header("not-a-jwt"),
+        ).status_code
+        == 401
+    )
 
 
 def test_staff_can_not_change_his_own_status(client):

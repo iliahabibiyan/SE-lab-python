@@ -2,7 +2,7 @@ import pathlib
 from datetime import date
 
 import pytest
-from sqlalchemy import inspect, select, text
+from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
 from app.database import MIGRATIONS_DIR, run_migrations
@@ -62,7 +62,16 @@ def test_check_and_unique_constraints(pg_session_factory):
         with pytest.raises(IntegrityError):
             db.commit()
         db.rollback()
-        db.add(User(national_code=user.national_code, name="x", birth_date=user.birth_date, phone_number="09123456789", address="Tehran, Azadi St.", postal_code="1593656789"))
+        db.add(
+            User(
+                national_code=user.national_code,
+                name="x",
+                birth_date=user.birth_date,
+                phone_number="09123456789",
+                address="Tehran, Azadi St.",
+                postal_code="1593656789",
+            )
+        )
         with pytest.raises(IntegrityError):
             db.commit()
 

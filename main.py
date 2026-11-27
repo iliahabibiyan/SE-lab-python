@@ -50,5 +50,5 @@ def ready(db: Session = Depends(get_db)) -> dict[str, str]:
     try:
         db.execute(text("SELECT 1"))
     except Exception:
-        raise ApiError(503, "SERVICE_UNAVAILABLE", "Database is not reachable")
+        raise ApiError(503, "SERVICE_UNAVAILABLE", "Database is not reachable") from None
     return {"status": "ready"}

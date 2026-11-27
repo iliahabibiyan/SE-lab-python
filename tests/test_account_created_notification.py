@@ -37,7 +37,7 @@ def test_the_account_is_created_even_when_s2_is_down(client, fake_s2):
 
 
 def test_s2_is_not_told_when_the_account_is_refused(client, fake_s2):
-    me = register_user(client)
+    register_user(client)
     other_headers = auth_header(token_for(client))
     response = client.post(URL, json={"user_id": "00000000-0000-7000-8000-000000000000"}, headers=other_headers)
     assert response.status_code == 403

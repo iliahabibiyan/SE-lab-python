@@ -5,3 +5,4 @@ pytest-cov==6.0.0
 testcontainers[postgres]==4.9.0
 jsonschema==4.23.0
 pyyaml==6.0.2
+ruff==0.8.4
