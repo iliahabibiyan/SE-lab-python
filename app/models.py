@@ -24,6 +24,7 @@ class User(Base):
     role: Mapped[str] = mapped_column(String(10), default="USER")  # USER or ADMIN
     token_version: Mapped[int] = mapped_column(Integer, default=0)  # grows when the user is blocked: revokes tokens
 
+
 class Account(Base):
     __tablename__ = "accounts"
 

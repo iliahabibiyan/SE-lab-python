@@ -135,7 +135,7 @@ class UserStatusUpdate(BaseModel):
     def clean_reason(cls, v):
         # extra spaces are removed; a reason with only spaces means "no reason"
         return (normalize_text(v) or None) if isinstance(v, str) else v
- 
+
 
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -158,6 +158,7 @@ class UserListResponse(BaseModel):
 
 class AccountCreate(BaseModel):
     """Request body of POST /api/v1/accounts (US6)."""
+
     model_config = ConfigDict(extra="forbid")
     user_id: UUID  # the owner
     account_type: Literal["CURRENT", "SAVINGS", "DEPOSIT"] = "CURRENT"  # current / savings / deposit

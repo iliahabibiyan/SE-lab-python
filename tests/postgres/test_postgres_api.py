@@ -16,7 +16,11 @@ def test_register_login_and_open_accounts_on_postgresql(pg_client, pg_session_fa
     headers = auth_header(token)
 
     first = pg_client.post("/api/v1/accounts", json={"user_id": user["id"]}, headers=headers)
-    second = pg_client.post("/api/v1/accounts", json={"user_id": user["id"], "account_type": "SAVINGS"}, headers=headers)
+    second = pg_client.post(
+        "/api/v1/accounts",
+        json={"user_id": user["id"], "account_type": "SAVINGS"},
+        headers=headers,
+    )
     third = pg_client.post("/api/v1/accounts", json={"user_id": user["id"]}, headers=headers)
 
     assert (first.status_code, second.status_code, third.status_code) == (201, 201, 409)

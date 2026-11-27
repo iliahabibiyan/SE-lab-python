@@ -61,6 +61,7 @@ def test_seed_creates_the_demo_accounts_and_can_run_twice(client):
         assert response.json()["sheba_number"] == account["sheba_number"]
         assert response.json()["status"] == account["status"]
 
+
 def test_seed_tells_s2_about_the_demo_accounts(client, monkeypatch):
     fake = FakeS2Client()
     monkeypatch.setenv("S2_BASE_URL", "http://s2.test")
@@ -68,12 +69,14 @@ def test_seed_tells_s2_about_the_demo_accounts(client, monkeypatch):
     seed_demo_data()
     assert {call[0] for call in fake.calls} == {account["id"] for account in ACCOUNTS}
 
+
 def test_seed_still_works_when_s2_is_down(client, monkeypatch):
     fake = FakeS2Client(down=True)
     monkeypatch.setenv("S2_BASE_URL", "http://s2.test")
     monkeypatch.setattr("app.seed.get_s2_client", lambda: fake)
     seed_demo_data()  # must not raise
     assert len(fake.calls) == len(ACCOUNTS)
+
 
 def test_seed_does_not_call_s2_when_it_is_not_configured(client, monkeypatch):
     fake = FakeS2Client()

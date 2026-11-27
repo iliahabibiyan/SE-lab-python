@@ -30,7 +30,11 @@ def test_tampered_token_is_rejected():
 
 
 def test_token_signed_with_another_key_is_rejected():
-    forged = jwt.encode({"sub": USER_ID, "type": "access", "exp": 9999999999}, "another-secret-key-0123456789-abcdef", algorithm="HS256")
+    forged = jwt.encode(
+        {"sub": USER_ID, "type": "access", "exp": 9999999999},
+        "another-secret-key-0123456789-abcdef",
+        algorithm="HS256",
+    )
     with pytest.raises(jwt.InvalidTokenError):
         decode_token(forged)
 
@@ -47,7 +51,7 @@ def test_garbage_is_rejected():
         decode_token("not-a-jwt")
 
 
-def test_empty_and_short_secrets_are_refused(monkeypatch):    
+def test_empty_and_short_secrets_are_refused(monkeypatch):
     for bad_secret in ("", "short"):
         monkeypatch.setenv("JWT_SECRET", bad_secret)
         with pytest.raises(RuntimeError):

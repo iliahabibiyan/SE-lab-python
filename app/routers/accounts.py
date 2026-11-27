@@ -25,6 +25,7 @@ MAX_ACCOUNTS_PER_USER = int(os.getenv("MAX_ACCOUNTS_PER_USER", "5"))
 ACCOUNT_NOT_FOUND = "Account not found"
 USER_NOT_FOUND = "User not found"
 
+
 @router.get("/{account_id}", response_model=AccountResponse)
 def get_account(account_id: UUID, db: Session = Depends(get_db)):
     """Details and status of an account. Service to service call (for example S2): no user token."""
@@ -32,6 +33,7 @@ def get_account(account_id: UUID, db: Session = Depends(get_db)):
     if account is None:
         raise ApiError(404, "NOT_FOUND", ACCOUNT_NOT_FOUND)
     return account
+
 
 @router.post("", response_model=AccountResponse, status_code=201)
 def create_account(

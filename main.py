@@ -18,14 +18,14 @@ from app.tokens import get_secret
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    get_secret()  
+    get_secret()
     run_migrations()
     if os.getenv("SEED_DATA") == "1":  # demo data (docker-compose turns it on)
         seed_demo_data()
     yield
 
 
-app = FastAPI(title="S1 - Customer & Account Management", redirect_slashes=False, lifespan=lifespan)
+app = FastAPI(title="S1 - Customer & Account Management", version="0.8.0", redirect_slashes=False, lifespan=lifespan)
 app.middleware("http")(correlation_middleware)
 app.add_middleware(
     CORSMiddleware,
@@ -50,5 +50,5 @@ def ready(db: Session = Depends(get_db)) -> dict[str, str]:
     try:
         db.execute(text("SELECT 1"))
     except Exception:
-        raise ApiError(503, "SERVICE_UNAVAILABLE", "Database is not reachable")
+        raise ApiError(503, "SERVICE_UNAVAILABLE", "Database is not reachable") from None
     return {"status": "ready"}

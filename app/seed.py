@@ -1,4 +1,7 @@
-"""Demo data with FIXED ids, so that S1 can be tried (and other teams can test against it) without creating data. Enabled with SEED_DATA=1."""
+"""Demo data with FIXED ids, so S1 can be tried (and other teams can test against it) without creating data.
+
+Enabled with SEED_DATA=1.
+"""
 
 import json
 import logging
@@ -66,11 +69,14 @@ def seed_demo_data() -> None:
                     db.add(Account(**data))
             db.commit()
     except IntegrityError as error:  # e.g. somebody already registered one of the demo national codes
-        logger.warning(json.dumps({"level": "WARNING", "service": "S1-ACC", "event": "seed_failed", "error": str(error.orig)}))
+        logger.warning(
+            json.dumps({"level": "WARNING", "service": "S1-ACC", "event": "seed_failed", "error": str(error.orig)})
+        )
     tell_s2_about_the_demo_accounts()
 
+
 def tell_s2_about_the_demo_accounts() -> None:
-    """S2 asks S1 about an account before it posts entries, so it must know the demo accounts. Repeating it is harmless."""
+    """Tell S2 about demo accounts before it posts entries; repeating this call is harmless."""
     if not os.getenv("S2_BASE_URL"):
         return  # S2 is not configured (for example when S1 runs alone)
     client = get_s2_client()
@@ -78,4 +84,14 @@ def tell_s2_about_the_demo_accounts() -> None:
         try:
             client.account_created(data["id"])
         except S2Unavailable as error:  # S2 may start later; S1 must start anyway
-            logger.warning(json.dumps({"level": "WARNING", "service": "S1-ACC", "event": "s2_unavailable", "account_id": data["id"], "error": str(error)}))
+            logger.warning(
+                json.dumps(
+                    {
+                        "level": "WARNING",
+                        "service": "S1-ACC",
+                        "event": "s2_unavailable",
+                        "account_id": data["id"],
+                        "error": str(error),
+                    }
+                )
+            )

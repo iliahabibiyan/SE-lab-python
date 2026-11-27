@@ -36,8 +36,8 @@ class ApiError(Exception):
         self.code = code
         self.detail = detail
         self.title = title or code.replace("_", " ").capitalize()
-        self.extra = extra or {}      # additional fields of the problem body
-        self.headers = headers        # additional HTTP headers (e.g. Retry-After)
+        self.extra = extra or {}  # additional fields of the problem body
+        self.headers = headers  # additional HTTP headers (e.g. Retry-After)
 
 
 def problem_response(

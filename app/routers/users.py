@@ -21,6 +21,7 @@ logger = logging.getLogger("labbank")
 
 DUPLICATE_NATIONAL_CODE = "National code already exists"
 
+
 @router.post("", response_model=UserResponse, status_code=201)
 def register_user(body: UserCreate, db: Session = Depends(get_db)):
     """US1: register a new user. Status is ACTIVE by default."""
@@ -34,7 +35,7 @@ def register_user(body: UserCreate, db: Session = Depends(get_db)):
         db.commit()
     except IntegrityError:  # two requests with the same national code at the same time
         db.rollback()
-        raise ApiError(409, "CONFLICT", DUPLICATE_NATIONAL_CODE)
+        raise ApiError(409, "CONFLICT", DUPLICATE_NATIONAL_CODE) from None
     db.refresh(user)
     return user
 
@@ -73,6 +74,7 @@ def search_users(
 
 
 USER_NOT_FOUND = "User not found"
+
 
 @router.get("/{user_id}", response_model=UserResponse)
 def get_user(

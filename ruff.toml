@@ -1,0 +1,9 @@
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "I", "B"]  # pycodestyle, pyflakes, import order, bugbear
+
+[lint.flake8-bugbear]
+# FastAPI reads Depends(...) and Query(...) in argument defaults: that is how it works, not a bug
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query"]
