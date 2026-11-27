@@ -57,7 +57,15 @@ pip install -r requirements-dev.txt
 pytest                                                      # all tests
 pytest tests/test_login.py::test_login_success_returns_jwt -v   # one test
 ```
-The tests use a temporary SQLite database, so PostgreSQL is not needed.
+Most tests use a temporary SQLite database, so PostgreSQL is not needed.
+
+```bash
+pytest --cov --cov-report=term-missing   # coverage of app/ (line and branch, see .coveragerc)
+pytest -m postgres                       # only the tests on a real PostgreSQL (Testcontainers, Docker must run)
+pytest -m "not postgres"                 # everything else
+```
+The PostgreSQL tests start `postgres:16-alpine` and are skipped when Docker is not available.
+`tests/test_contract_conformance.py` checks the answers of the API against `openapi/account.yaml`.
 API requests for Bruno are in `tests-api/` (open the folder in Bruno, choose the `local` environment, Run Collection).
 
 ## Configuration
