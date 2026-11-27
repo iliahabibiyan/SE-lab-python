@@ -24,7 +24,7 @@ services:
       SEED_DATA: ${SEED_DATA:-1}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       MAX_ACCOUNTS_PER_USER: ${MAX_ACCOUNTS_PER_USER:-5}
-      S2_BASE_URL: ${S2_BASE_URL:-}
+      S2_BASE_URL: ${S2_BASE_URL-http://s2:8082}
     ports:
       - "${S1_PORT:-8081}:8081"
     healthcheck:
@@ -37,6 +37,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      s2:
+        condition: service_started
+
+
+  s2:
+    # stub of S2 (Ledger), made from the contract of the call S1 -> S2 (account created)
+    image: stoplight/prism:5
+    command: mock -h 0.0.0.0 -p 8082 /contracts/s2-account-created.openapi.yaml
+    volumes:
+      - ./docs/s2-account-created.openapi.yaml:/contracts/s2-account-created.openapi.yaml:ro
+
 
     frontend:
       build: ./frontend
