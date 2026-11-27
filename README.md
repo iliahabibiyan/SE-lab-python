@@ -84,3 +84,8 @@ API requests for Bruno are in `tests-api/` (open the folder in Bruno, choose the
 | `S2_BASE_URL` | `http://s2:8082` (the stub) in Compose | address of S2; empty means S2 is not told about new accounts |
 | `LOG_LEVEL` | INFO | log level |
 | `S1_PORT`, `FRONTEND_PORT`, `DB_HOST_PORT` | 8081, 8080, 5432 | published ports (Compose only) |
+
+## CI and releases
+- `.github/workflows/ci.yml` runs on every pull request: `backend` (ruff, tests on SQLite and a real PostgreSQL, coverage, image build), `frontend` (eslint, build, generated api types up to date) and `contract` (redocly lint).
+- Before a pull request: `ruff check . && ruff format --check . && pytest`.
+- Release: change `version` in `main.py`, merge, then `git tag v0.8.0 && git push origin v0.8.0`. `.github/workflows/release.yml` builds the image once and pushes `ghcr.io/<owner>/labbank-account:0.8.0` and `:sha-<short sha>`; the digest is in the run summary. Make the package public in GitHub (Packages, Package settings).
